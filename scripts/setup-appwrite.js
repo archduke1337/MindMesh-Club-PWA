@@ -121,8 +121,8 @@ console.log(`  Endpoint : ${ENDPOINT}`);
 console.log(`  Project  : ${PROJECT_ID}`);
 console.log(`  Database : ${DB_ID}`);
 
-// Set client
-run(["client", "--endpoint", ENDPOINT, "--project-id", PROJECT_ID]);
+// Set client with API key
+run(["client", "--endpoint", ENDPOINT, "--project-id", PROJECT_ID, "--key", API_KEY]);
 
 // Create database
 log("step", `Creating database: ${DB_ID}`);
