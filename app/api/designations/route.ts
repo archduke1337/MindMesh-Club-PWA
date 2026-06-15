@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/appwrite";
 import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import { ID, Query } from "appwrite";
+import { sendEmail, designationEmailTemplate } from "@/lib/emailService";
 
 function hasSession(request: NextRequest): boolean {
   return Array.from(request.cookies).some(
@@ -74,6 +75,20 @@ export async function POST(request: NextRequest) {
       details: JSON.stringify({ userId, designationName, departmentId }),
       timestamp: new Date().toISOString(),
     });
+
+    try {
+      const profile = await databases.getDocument(DATABASE_ID, COLLECTIONS.PROFILES, userId);
+      if (profile && profile.email) {
+        const emailTemplate = designationEmailTemplate(
+          profile.name,
+          designationName,
+          departmentId || "unassigned"
+        );
+        await sendEmail({ to: profile.email, ...emailTemplate });
+      }
+    } catch {
+      // Profile may not exist yet; email is best-effort
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

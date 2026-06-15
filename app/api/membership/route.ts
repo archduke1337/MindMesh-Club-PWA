@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/appwrite";
 import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import { ID, Query } from "appwrite";
+import { sendEmail, welcomeEmailTemplate } from "@/lib/emailService";
 
 function hasSession(request: NextRequest): boolean {
   return Array.from(request.cookies).some(
@@ -83,6 +84,13 @@ export async function POST(request: NextRequest) {
         read: false,
         createdAt: new Date().toISOString(),
       });
+
+      const emailTemplate = welcomeEmailTemplate(
+        application.name,
+        membershipId,
+        application.department || "unassigned"
+      );
+      await sendEmail({ to: application.email, ...emailTemplate });
 
       return NextResponse.json({ success: true, membershipId });
     }
