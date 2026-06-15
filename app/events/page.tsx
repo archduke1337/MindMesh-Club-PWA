@@ -5,9 +5,9 @@ import { title, subtitle } from "@/components/primitives";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { eventService, type Event as EventType } from "@/lib/database";
+import { eventService } from "@/lib/events";
+import type { Event } from "@/lib/types";
 import { getErrorMessage } from "@/lib/errorHandler";
-import { sendRegistrationEmail } from "@/lib/emailService";
 import {
   CalendarIcon,
   MapPinIcon,
@@ -50,13 +50,13 @@ export default function EventsPage() {
   const [sortBy, setSortBy] = useState("date");
   const [savedEvents, setSavedEvents] = useState<string[]>([]);
   const [registeredEvents, setRegisteredEvents] = useState<string[]>([]);
-  const [events, setEvents] = useState<EventType[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState<string | null>(null);
 
   const loadEvents = useCallback(async () => {
     try {
-      const allEvents = await eventService.getUpcomingEvents();
+      const allEvents = await eventService.getUpcoming();
       setEvents(allEvents);
     } catch (error) {
       console.error("Error loading events:", error);
@@ -65,22 +65,28 @@ export default function EventsPage() {
     }
   }, []);
 
-  const loadSavedEvents = useCallback(() => {
-    const saved = localStorage.getItem("savedEvents");
-    if (saved) setSavedEvents(JSON.parse(saved));
-    
-    const registered = localStorage.getItem("registeredEvents");
-    if (registered) setRegisteredEvents(JSON.parse(registered));
-  }, []);
-
   useEffect(() => {
     loadEvents();
-    loadSavedEvents();
-  }, [loadEvents, loadSavedEvents]);
+  }, [loadEvents]);
+
+  useEffect(() => {
+    if (!user || events.length === 0) return;
+    const loadRegistrations = async () => {
+      const results = await Promise.all(
+        events.map(async (e) => {
+          if (!e.$id) return null;
+          const registered = await eventService.isRegistered(e.$id, user.$id);
+          return registered ? e.$id : null;
+        })
+      );
+      setRegisteredEvents(results.filter((id): id is string => id !== null));
+    };
+    loadRegistrations();
+  }, [user, events]);
 
   const filteredEvents = useMemo(() => events
     .filter(event =>
-      selectedCategory === "all" || event.category === selectedCategory
+      selectedCategory === "all" || event.eventTypeId === selectedCategory
     )
     .filter(event =>
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -122,71 +128,23 @@ export default function EventsPage() {
 
     if (registeredEvents.includes(eventId)) {
       if (!confirm("Are you sure you want to unregister from this event?")) return;
-      setRegisteredEvents(prev => {
-        const newRegistered = prev.filter(id => id !== eventId);
-        localStorage.setItem("registeredEvents", JSON.stringify(newRegistered));
-        return newRegistered;
-      });
-      localStorage.removeItem(`ticket_${eventId}`);
-      toast.success("Successfully unregistered from event");
+      try {
+        await eventService.cancelRegistration(eventId, user.$id);
+        setRegisteredEvents(prev => prev.filter(id => id !== eventId));
+        toast.success("Successfully unregistered from event");
+        await loadEvents();
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+      }
       return;
     }
 
     setRegistering(eventId);
     try {
-      const event = events.find(e => e.$id === eventId);
-      if (!event) throw new Error("Event not found");
-
-      await eventService.registerForEvent(eventId, user.$id, user.name, user.email);
+      await eventService.register(eventId, user.$id, user.name, user.email);
       
-      const emailResult = await sendRegistrationEmail(
-        user.email,
-        user.name,
-        {
-          title: event.title,
-          date: event.date,
-          time: event.time,
-          venue: event.venue,
-          location: event.location,
-          image: event.image,
-          organizerName: event.organizerName,
-          price: event.price,
-          discountPrice: event.discountPrice,
-        }
-      );
-
-      const ticketData = {
-        ticketId: emailResult.ticketId || `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        eventId: event.$id,
-        eventTitle: event.title,
-        userName: user.name,
-        userEmail: user.email,
-        date: event.date,
-        time: event.time,
-        venue: event.venue,
-        location: event.location,
-        registeredAt: new Date().toISOString(),
-      };
-      
-      localStorage.setItem(`ticket_${eventId}`, JSON.stringify(ticketData));
-      
-      setRegisteredEvents(prev => {
-        const newRegistered = [...prev, eventId];
-        localStorage.setItem("registeredEvents", JSON.stringify(newRegistered));
-        return newRegistered;
-      });
-      
-      if (emailResult.success) {
-        toast.success(
-          `Registration successful! E-ticket sent to ${user.email}`,
-          { description: `Ticket ID: ${emailResult.ticketId}. Check your inbox (and spam folder).` }
-        );
-      } else {
-        toast.warning(
-          "Registration successful (email issue)",
-          { description: `Ticket ID: ${ticketData.ticketId}. Your ticket is saved locally. Contact hello@mindmesh.club for help.` }
-        );
-      }
+      setRegisteredEvents(prev => [...prev, eventId]);
+      toast.success("Registration successful!");
       
       await loadEvents();
     } catch (error) {

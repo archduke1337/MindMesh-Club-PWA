@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { eventService, type Event } from "@/lib/database";
-import { sendRegistrationEmail } from "@/lib/emailService";
+import { eventService } from "@/lib/events";
+import { ticketService } from "@/lib/tickets";
+import type { Event, Ticket } from "@/lib/types";
 import { getErrorMessage } from "@/lib/errorHandler";
 import { toast } from "sonner";
 import { Button, Card, CardContent, Chip } from "@heroui/react";
@@ -36,6 +37,7 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [ticket, setTicket] = useState<Ticket | null>(null);
 
   const eventId = params.id as string;
 
@@ -47,12 +49,16 @@ export default function EventDetailPage() {
 
   const loadEvent = async () => {
     try {
-      const data = await eventService.getEventById(eventId);
+      const data = await eventService.getById(eventId);
       setEvent(data);
 
       if (user) {
-        const registered = await eventService.isUserRegistered(eventId, user.$id);
+        const registered = await eventService.isRegistered(eventId, user.$id);
         setIsRegistered(registered);
+        if (registered) {
+          const t = await ticketService.getByUserAndEvent(user.$id, eventId);
+          setTicket(t);
+        }
       }
     } catch (error) {
       console.error("Error loading event:", error);
@@ -73,24 +79,9 @@ export default function EventDetailPage() {
 
     setRegistering(true);
     try {
-      await eventService.registerForEvent(eventId, user.$id, user.name, user.email);
+      await eventService.register(eventId, user.$id, user.name, user.email);
 
-      const emailResult = await sendRegistrationEmail(user.email, user.name, {
-        title: event.title,
-        date: event.date,
-        time: event.time,
-        venue: event.venue,
-        location: event.location,
-        organizerName: event.organizerName,
-        price: event.price,
-        discountPrice: event.discountPrice,
-      });
-
-      if (emailResult.success) {
-        toast.success(`Registration successful! E-ticket sent to ${user.email}`);
-      } else {
-        toast.success("Registration successful! Email could not be sent.");
-      }
+      toast.success("Registration successful!");
 
       setIsRegistered(true);
       loadEvent();
@@ -165,7 +156,7 @@ export default function EventDetailPage() {
               </Chip>
             )}
             <Chip className="bg-white/20 backdrop-blur-md text-white">
-              {event.category}
+              {event.eventTypeId}
             </Chip>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-white">{event.title}</h1>
@@ -261,6 +252,14 @@ export default function EventDetailPage() {
               >
                 {isRegistered ? "Already Registered" : "Register Now"}
               </Button>
+
+              {isRegistered && ticket && (
+                <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                  <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">Your Ticket</p>
+                  <p className="text-sm text-green-700 dark:text-green-300">Code: {ticket.ticketCode}</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">Status: {ticket.status}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

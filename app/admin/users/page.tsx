@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { databases } from "@/lib/appwrite";
 import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import { Query } from "appwrite";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Button, Card, CardContent, Chip, Input, Label, TextField, Avatar, AvatarImage, AvatarFallback, Modal, ModalBackdrop, ModalContainer, ModalDialog, ModalBody, ModalFooter, ModalHeader } from "@heroui/react";
 import { Search, User, Shield, Edit, TrashIcon, Eye } from "lucide-react";
@@ -21,13 +23,35 @@ interface UserProfile {
 }
 
 export default function AdminUsersPage() {
+  const { user: authUser } = useAuth();
+  const router = useRouter();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => {
+    if (!authUser) return;
+    const checkAdmin = async () => {
+      try {
+        const res = await fetch("/api/admin-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: authUser.email }),
+        });
+        const data = await res.json();
+        if (!data.isAdmin) {
+          router.push("/unauthorized");
+          return;
+        }
+        loadUsers();
+      } catch {
+        router.push("/unauthorized");
+      }
+    };
+    checkAdmin();
+  }, [authUser, router]);
 
   const loadUsers = async () => {
     try {

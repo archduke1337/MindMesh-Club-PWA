@@ -1,12 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { galleryService, galleryCategories, type GalleryImage } from "@/lib/gallery";
+import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/context/PermissionContext";
 import { toast } from "sonner";
 import { Button, Card, CardContent, Chip, Modal, ModalBackdrop, ModalContainer, ModalDialog, ModalBody, ModalFooter, ModalHeader } from "@heroui/react";
 import { CheckIcon, XIcon, TrashIcon, ImageIcon } from "lucide-react";
 
 export default function AdminGalleryPage() {
+  const router = useRouter();
+  const { user: authUser } = useAuth();
+  const { hasPermission, loading: permLoading } = usePermissions();
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState("pending");
@@ -15,7 +21,19 @@ export default function AdminGalleryPage() {
   const [rejectingImage, setRejectingImage] = useState<GalleryImage | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
-  useEffect(() => { loadImages(); }, []);
+  useEffect(() => {
+    if (permLoading) return;
+    if (!authUser) {
+      router.push("/login");
+      return;
+    }
+    if (!hasPermission("approve_gallery") && (authUser.prefs as Record<string, unknown>)?.status !== "admin" && (authUser.prefs as Record<string, unknown>)?.status !== "dev") {
+      toast.error("You don't have permission to manage the gallery");
+      router.push("/unauthorized");
+      return;
+    }
+    loadImages();
+  }, [authUser, permLoading, hasPermission, router]);
 
   const loadImages = async () => {
     try {

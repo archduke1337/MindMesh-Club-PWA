@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { databases } from "@/lib/appwrite";
 import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import { Query } from "appwrite";
+import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/context/PermissionContext";
 import { toast } from "sonner";
 import { Button, Card, CardContent, Chip, Input, Label, TextField } from "@heroui/react";
 import { Search, CheckCircle, XCircle, User, QrCode } from "lucide-react";
@@ -22,11 +24,25 @@ interface TicketData {
 
 export default function TicketVerifyPage() {
   const router = useRouter();
+  const { user: authUser } = useAuth();
+  const { hasPermission, loading: permLoading } = usePermissions();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"code" | "email">("code");
   const [loading, setLoading] = useState(false);
   const [foundTicket, setFoundTicket] = useState<TicketData | null>(null);
   const [recentCheckIns, setRecentCheckIns] = useState<TicketData[]>([]);
+
+  useEffect(() => {
+    if (permLoading) return;
+    if (!authUser) {
+      router.push("/login");
+      return;
+    }
+    if (!hasPermission("verify_tickets") && (authUser.prefs as Record<string, unknown>)?.status !== "admin" && (authUser.prefs as Record<string, unknown>)?.status !== "dev") {
+      toast.error("You don't have permission to verify tickets");
+      router.push("/unauthorized");
+    }
+  }, [authUser, permLoading, hasPermission, router]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { eventService, Event } from "@/lib/database";
+import { eventService } from "@/lib/events";
+import type { Event } from "@/lib/types";
 import { getErrorMessage } from "@/lib/errorHandler";
 import { toast } from "sonner";
 import { PlusIcon, Pencil, Trash2, Image as ImageIcon, CalendarIcon, MapPinIcon, UsersIcon, DollarSignIcon, TagIcon, StarIcon, CrownIcon, TrendingUpIcon, LinkIcon } from "lucide-react";
@@ -22,23 +23,25 @@ export default function AdminEventsPage() {
   // Form state
   const [formData, setFormData] = useState<Partial<Event>>({
     title: "",
+    slug: "",
     description: "",
     image: "",
+    eventTypeId: "conference",
+    status: "draft",
+    audience: "member_only",
     date: "",
     time: "",
     venue: "",
     location: "",
-    category: "conference",
     price: 0,
-    discountPrice: null,
+    discountPrice: undefined,
     capacity: 50,
     registered: 0,
     organizerName: "",
-    organizerAvatar: "",
+    ownerId: "",
     tags: [],
     isFeatured: false,
     isPremium: false,
-    status: "upcoming"
   });
   const [tagInput, setTagInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -52,7 +55,7 @@ export default function AdminEventsPage() {
 
   const loadEvents = async () => {
     try {
-      const allEvents = await eventService.getAllEvents();
+      const allEvents = await eventService.getAll();
       setEvents(allEvents);
     } catch (error) {
       console.error("Error loading events:", error);
@@ -100,9 +103,9 @@ export default function AdminEventsPage() {
 
     try {
       if (editingEvent) {
-        await eventService.updateEvent(editingEvent.$id!, formData);
+        await eventService.update(editingEvent.$id!, formData);
       } else {
-        await eventService.createEvent(formData as Omit<Event, '$id' | '$createdAt' | '$updatedAt'>);
+        await eventService.create(formData as Omit<Event, '$id' | '$createdAt' | '$updatedAt'>);
       }
       
       await loadEvents();
@@ -127,7 +130,7 @@ export default function AdminEventsPage() {
     if (!confirm("Are you sure you want to delete this event? This cannot be undone.")) return;
     setDeletingId(eventId);
     try {
-      await eventService.deleteEvent(eventId);
+      await eventService.delete(eventId);
       await loadEvents();
       toast.success("Event deleted successfully!");
     } catch (error) {
@@ -154,23 +157,25 @@ export default function AdminEventsPage() {
     setEditingEvent(null);
     setFormData({
       title: "",
+      slug: "",
       description: "",
       image: "",
+      eventTypeId: "conference",
+      status: "draft",
+      audience: "member_only",
       date: "",
       time: "",
       venue: "",
       location: "",
-      category: "conference",
       price: 0,
-      discountPrice: null,
+      discountPrice: undefined,
       capacity: 50,
       registered: 0,
       organizerName: "",
-      organizerAvatar: "",
+      ownerId: "",
       tags: [],
       isFeatured: false,
       isPremium: false,
-      status: "upcoming"
     });
     setTagInput("");
     close();
@@ -309,7 +314,7 @@ export default function AdminEventsPage() {
                             {event.title}
                           </p>
                           <p className="text-xs md:text-sm text-default-500 truncate">
-                            {event.category}
+                            {event.eventTypeId}
                           </p>
                           <p className="text-xs text-default-400 md:hidden">
                             {new Date(event.date).toLocaleDateString()}

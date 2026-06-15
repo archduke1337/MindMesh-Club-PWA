@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { blogService, blogCategories } from "@/lib/blog";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/context/PermissionContext";
 import { getErrorMessage } from "@/lib/errorHandler";
 import type { ExtendedUser } from "@/lib/types";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ export default function WriteBlogPage() {
   const router = useRouter();
   const { user: authUser } = useAuth();
   const user = authUser as unknown as ExtendedUser | null;
+  const { hasPermission, loading: permLoading } = usePermissions();
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -28,11 +30,17 @@ export default function WriteBlogPage() {
   });
 
   useEffect(() => {
+    if (permLoading) return;
     if (!user) {
       toast.error("Please login to write a blog");
       router.push("/login");
+      return;
     }
-  }, [user, router]);
+    if (!hasPermission("create_blogs") && (user.prefs as Record<string, unknown>)?.status !== "admin" && (user.prefs as Record<string, unknown>)?.status !== "dev") {
+      toast.error("You don't have permission to create blogs");
+      router.push("/unauthorized");
+    }
+  }, [user, permLoading, hasPermission, router]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

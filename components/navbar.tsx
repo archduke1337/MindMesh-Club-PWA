@@ -3,11 +3,15 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button, Avatar, 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { Bell } from "lucide-react";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { Logo } from "@/components/icons";
 import { useAuth } from "@/context/AuthContext";
+import { databases } from "@/lib/appwrite";
+import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
+import { Query } from "appwrite";
 
 const getAvatarUrl = (name: string) => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
@@ -17,6 +21,8 @@ export const Navbar = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -24,6 +30,41 @@ export const Navbar = () => {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchNotifications = async () => {
+      try {
+        const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.NOTIFICATIONS, [
+          Query.equal("userId", [user.$id]),
+          Query.equal("read", [false]),
+          Query.limit(100),
+        ]);
+        setUnreadCount(response.documents.length);
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      }
+    };
+    fetchNotifications();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const checkAdmin = async () => {
+      try {
+        const res = await fetch("/api/admin-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email }),
+        });
+        const data = await res.json();
+        setIsAdmin(data.isAdmin);
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
 
   const showMobileMenu = isMobile === true;
   const showDesktopMenu = isMobile === false;
@@ -72,27 +113,49 @@ export const Navbar = () => {
         {!loading && (
           <>
             {user ? (
-              <Dropdown>
-                <DropdownTrigger>
-                  <Avatar className="transition-transform border-2 border-default-300 w-8 h-8">
-                    <AvatarImage src={getAvatarUrl(user.name)} alt={user.name} />
-                    <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
-                  </Avatar>
-                </DropdownTrigger>
-                <DropdownMenu aria-label="Profile Actions">
-                  <DropdownItem key="profile" className="h-14 gap-2">
-                    <p className="font-semibold">Signed in as</p>
-                    <p className="font-semibold">{user.email}</p>
-                  </DropdownItem>
-                  {siteConfig.navMenuItems.map((item) => (
-                    <DropdownItem key={item.href}>
-                      <Link href={item.href} className={item.href === "/logout" ? "text-danger" : ""}>
-                        {item.label}
-                      </Link>
+              <>
+                {/* Notifications bell */}
+                <Link href="/notifications" className="relative">
+                  <Button variant="ghost" isIconOnly size="sm">
+                    <Bell className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-danger text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Avatar className="transition-transform border-2 border-default-300 w-8 h-8">
+                      <AvatarImage src={getAvatarUrl(user.name)} alt={user.name} />
+                      <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
+                    </Avatar>
+                  </DropdownTrigger>
+                  <DropdownMenu aria-label="Profile Actions">
+                    <DropdownItem key="profile" className="h-14 gap-2">
+                      <p className="font-semibold">Signed in as</p>
+                      <p className="font-semibold">{user.email}</p>
                     </DropdownItem>
-                  ))}
-                </DropdownMenu>
-              </Dropdown>
+                    <DropdownItem key="my-events">
+                      <Link href="/events">My Events</Link>
+                    </DropdownItem>
+                    {isAdmin && (
+                      <DropdownItem key="admin">
+                        <Link href="/admin">Admin Panel</Link>
+                      </DropdownItem>
+                    )}
+                    {siteConfig.navMenuItems.map((item) => (
+                      <DropdownItem key={item.href}>
+                        <Link href={item.href} className={item.href === "/logout" ? "text-danger" : ""}>
+                          {item.label}
+                        </Link>
+                      </DropdownItem>
+                    ))}
+                  </DropdownMenu>
+                </Dropdown>
+              </>
             ) : (
               <Link href="/login">
                 <Button variant="primary">Login</Button>
