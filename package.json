@@ -11,7 +11,10 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "vercel-build": "npm install --legacy-peer-deps && next build"
+    "vercel-build": "npm install --legacy-peer-deps && next build",
+    "appwrite:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-appwrite.ps1",
+    "appwrite:pull": "appwrite pull all --all",
+    "appwrite:push": "appwrite push all --all --force"
   },
   "dependencies": {
     "@heroui/react": "^3.1.0",
