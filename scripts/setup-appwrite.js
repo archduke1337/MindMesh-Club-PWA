@@ -6,6 +6,19 @@
 // ============================================================
 
 const { execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+// Read API key from .env.local
+const envPath = path.join(__dirname, "..", ".env.local");
+const envContent = fs.readFileSync(envPath, "utf-8");
+const apiKeyMatch = envContent.match(/NEXT_PUBLIC_APPWRITE_API_KEY\s*=\s*(.+)/);
+const API_KEY = apiKeyMatch ? apiKeyMatch[1].trim() : null;
+
+if (!API_KEY) {
+  console.error("Error: NEXT_PUBLIC_APPWRITE_API_KEY not found in .env.local");
+  process.exit(1);
+}
 
 const DB_ID = "mindmesh_db";
 const ENDPOINT = "https://fra.cloud.appwrite.io/v1";
