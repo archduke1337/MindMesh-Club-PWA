@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Card, Chip, Input, Label, TextField, Loader2 } from "@heroui/react";
+import { Card, Chip, Input, Label, TextField } from "@heroui/react";
+import { Loader2 } from "lucide-react";
 import { DepartmentCard } from "@/components/DepartmentCard";
 import { departmentService } from "@/lib/departments";
 import type { Department } from "@/lib/types";

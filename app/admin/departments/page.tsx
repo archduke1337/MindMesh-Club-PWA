@@ -126,9 +126,9 @@ export default function AdminDepartmentsPage() {
               <TextField variant="secondary"><Label>Slug</Label><Input placeholder="e.g., ai-ml" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} /></TextField>
               <div className="space-y-1"><Label>Description</Label><TextArea placeholder="Department description..." value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="min-h-[80px]" /></div>
               <TextField variant="secondary"><Label>Icon</Label><Input placeholder="Emoji or icon name" value={formData.icon} onChange={(e) => setFormData({ ...formData, icon: e.target.value })} /></TextField>
-              <div className="space-y-1"><Label>Category</Label><Select selectedKeys={[formData.category]} onSelectionChange={(keys) => setFormData({ ...formData, category: Array.from(keys)[0] as string })}>
-                {CATEGORIES.map((cat) => <Select.Item key={cat}>{cat}</Select.Item>)}
-              </Select></div>
+              <div className="space-y-1"><Label>Category</Label><select className="w-full p-2 rounded-lg border border-[var(--border)] bg-[var(--surface)]" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
+                {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+              </select></div>
             </div>
           </Modal.Body>
           <Modal.Footer>
