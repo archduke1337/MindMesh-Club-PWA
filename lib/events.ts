@@ -149,11 +149,7 @@ export const eventService = {
       if (event.audience === "exclusive") {
         registrationStatus = "pending";
       } else if (event.capacity && event.registered >= event.capacity) {
-        if (event.audience === "exclusive") {
-          registrationStatus = "waitlisted";
-        } else {
-          throw new Error("Event is full");
-        }
+        throw new Error("Event is full");
       }
 
       const registration = await databases.createDocument(DATABASE_ID, COLLECTIONS.REGISTRATIONS, ID.unique(), {

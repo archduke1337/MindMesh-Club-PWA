@@ -182,7 +182,7 @@ export default function FeaturedSection() {
 
                                              {/* Tags */}
                                              <div className="flex flex-wrap gap-2 pt-2">
-                                                  {event.tags.slice(0, 3).map((tag, idx) => (
+                                                   {(event.tags || []).slice(0, 3).map((tag: string, idx: number) => (
                                                        <span
                                                             key={idx}
                                                             className="px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full font-medium"
