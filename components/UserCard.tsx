@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, Avatar, Chip, Link } from "@heroui/react";
+import { Card, CardContent, Chip, Link } from "@heroui/react";
 import type { Profile, MembershipStatus } from "@/lib/types";
 
 interface UserCardProps {
@@ -12,14 +12,14 @@ interface UserCardProps {
   size?: "sm" | "md" | "lg";
 }
 
-const statusColors: Record<MembershipStatus, "default" | "primary" | "secondary" | "success" | "warning" | "danger"> = {
+const statusColors: Record<MembershipStatus, "default" | "success" | "warning" | "danger" | "accent"> = {
   no_account: "default",
   account: "default",
   applicant: "warning",
   member: "success",
-  core_member: "primary",
-  lead: "secondary",
-  head: "secondary",
+  core_member: "accent",
+  lead: "accent",
+  head: "accent",
   admin: "danger",
   dev: "danger",
   banned: "danger",
@@ -40,12 +40,21 @@ export function UserCard({
     <Card className="border border-default-200">
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
-          <Avatar
-            size={avatarSize}
-            src={profile.avatar}
-            name={profile.name || profile.userId}
-            showFallback
-          />
+          <div
+            className={`flex items-center justify-center rounded-full bg-default-200 text-default-600 font-semibold ${
+              avatarSize === "sm" ? "w-8 h-8 text-xs" : avatarSize === "lg" ? "w-14 h-14 text-lg" : "w-10 h-10 text-sm"
+            }`}
+          >
+            {profile.avatar ? (
+              <img
+                src={profile.avatar}
+                alt={profile.name || "User"}
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              (profile.name || profile.userId).charAt(0).toUpperCase()
+            )}
+          </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -56,7 +65,7 @@ export function UserCard({
                 {profile.name || "Unknown User"}
               </Link>
               {status && (
-                <Chip size="sm" variant="flat" color={statusColors[status]}>
+                <Chip size="sm" variant="soft" color={statusColors[status]}>
                   {status}
                 </Chip>
               )}
@@ -68,12 +77,12 @@ export function UserCard({
 
             <div className="flex flex-wrap gap-1 mt-1">
               {department && (
-                <Chip size="sm" variant="flat">
+                <Chip size="sm" variant="soft">
                   {department}
                 </Chip>
               )}
               {designation && (
-                <Chip size="sm" variant="flat" color="primary">
+                <Chip size="sm" variant="soft" color="accent">
                   {designation}
                 </Chip>
               )}
@@ -92,12 +101,12 @@ export function UserCard({
         {profile.skills && profile.skills.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {profile.skills.slice(0, 5).map((skill) => (
-              <Chip key={skill} size="sm" variant="flat" color="default">
+              <Chip key={skill} size="sm" variant="soft" color="default">
                 {skill}
               </Chip>
             ))}
             {profile.skills.length > 5 && (
-              <Chip size="sm" variant="flat" color="default">
+              <Chip size="sm" variant="soft" color="default">
                 +{profile.skills.length - 5}
               </Chip>
             )}

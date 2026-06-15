@@ -9,12 +9,12 @@ interface EventCardProps {
   showRegistration?: boolean;
 }
 
-const statusColors: Record<string, "default" | "primary" | "secondary" | "success" | "warning" | "danger"> = {
+const statusColors: Record<string, "default" | "success" | "warning" | "danger" | "accent"> = {
   draft: "default",
   review: "warning",
-  approved: "secondary",
+  approved: "accent",
   published: "success",
-  active: "primary",
+  active: "accent",
   completed: "default",
   cancelled: "danger",
 };
@@ -49,7 +49,7 @@ export function EventCard({ event, showStatus = true, showRegistration = true }:
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-lg line-clamp-2">{event.title}</h3>
               {showStatus && event.status && (
-                <Chip size="sm" variant="flat" color={statusColors[event.status] || "default"}>
+                <Chip size="sm" variant="soft" color={statusColors[event.status] || "default"}>
                   {event.status}
                 </Chip>
               )}
@@ -66,7 +66,7 @@ export function EventCard({ event, showStatus = true, showRegistration = true }:
             </div>
 
             <div className="flex items-center justify-between">
-              <Chip size="sm" variant="flat">
+              <Chip size="sm" variant="soft">
                 {audienceLabels[event.audience] || event.audience}
               </Chip>
 
@@ -85,7 +85,7 @@ export function EventCard({ event, showStatus = true, showRegistration = true }:
             </div>
 
             {event.isFeatured && (
-              <Chip size="sm" color="warning" variant="flat">
+              <Chip size="sm" color="warning" variant="soft">
                 Featured
               </Chip>
             )}

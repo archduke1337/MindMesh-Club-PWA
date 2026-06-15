@@ -8,17 +8,17 @@ interface DesignationBadgeProps {
   icon?: string;
   color?: string;
   size?: "sm" | "md" | "lg";
-  variant?: "flat" | "solid" | "bordered";
+  variant?: "primary" | "secondary" | "soft" | "tertiary";
 }
 
-const levelColors: Record<number, "default" | "primary" | "secondary" | "success" | "warning" | "danger"> = {
+const levelColors: Record<number, "default" | "success" | "warning" | "danger" | "accent"> = {
   1: "default",
   2: "default",
   3: "default",
-  4: "secondary",
-  5: "secondary",
-  6: "primary",
-  7: "primary",
+  4: "success",
+  5: "success",
+  6: "accent",
+  7: "accent",
   8: "warning",
   9: "warning",
   10: "danger",
@@ -30,7 +30,7 @@ export function DesignationBadge({
   icon,
   color,
   size = "md",
-  variant = "flat",
+  variant = "soft",
 }: DesignationBadgeProps) {
   const chipColor = color
     ? undefined
@@ -44,8 +44,8 @@ export function DesignationBadge({
       variant={variant}
       color={chipColor}
       style={color ? { backgroundColor: color + "20", color } : undefined}
-      startContent={icon ? <span>{icon}</span> : undefined}
     >
+      {icon && <span className="mr-1">{icon}</span>}
       {name}
     </Chip>
   );
