@@ -30,10 +30,8 @@ export const eventService = {
 
   async getUpcoming(limit = 5): Promise<Event[]> {
     try {
-      const now = new Date().toISOString();
       const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.EVENTS, [
         Query.equal("status", ["published"]),
-        Query.greater("date", [now]),
         Query.orderAsc("date"),
         Query.limit(limit),
       ]);

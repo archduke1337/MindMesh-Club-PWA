@@ -38,8 +38,9 @@ export default function CreateEventPage() {
     }
     setLoading(true); setError(null);
     try {
+      const slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
       const event = await eventService.create({
-        title: form.title, description: form.description, image: form.image,
+        title: form.title, slug, description: form.description, image: form.image,
         eventTypeId: form.eventTypeId, status: "draft", audience: form.audience as "public" | "member_only" | "exclusive",
         date: form.date, time: form.time, endDate: form.endDate || undefined,
         venue: form.venue, location: form.location, capacity: form.capacity,

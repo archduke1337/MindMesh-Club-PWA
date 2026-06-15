@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, Chip, Input, Label, TextField, Modal, Button, Loader2 } from "@heroui/react";
+import { Card, Chip, Input, Label, TextField, Modal, Button } from "@heroui/react";
+import { Loader2 } from "lucide-react";
 import { galleryService, galleryCategories, type GalleryImage } from "@/lib/gallery";
 import { Search, X, Upload } from "lucide-react";
 
