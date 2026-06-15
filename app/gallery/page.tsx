@@ -2,28 +2,41 @@
 
 import { useEffect, useState } from "react";
 import { Card, Chip, Input, Label, TextField, Modal, Button } from "@heroui/react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { galleryService, galleryCategories, type GalleryImage } from "@/lib/gallery";
-import { Search, X, Upload } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 export default function GalleryPage() {
+  const { user } = useAuth();
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    title: "", description: "", category: "events", tags: "",
+  });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
 
   useEffect(() => {
-    const loadImages = async () => {
-      try {
-        const approved = await galleryService.getApproved();
-        setImages(approved);
-      } catch (error) { console.error("Failed to load gallery:", error); }
-      finally { setLoading(false); }
-    };
     loadImages();
   }, []);
+
+  const loadImages = async () => {
+    try {
+      const approved = await galleryService.getApproved();
+      setImages(approved);
+    } catch (error) {
+      console.error("Failed to load gallery:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredImages = images.filter((img) => {
     const matchesCategory = selectedCategory === "all" || img.category === selectedCategory;
@@ -31,8 +44,57 @@ export default function GalleryPage() {
     return matchesCategory && matchesSearch;
   });
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size must be less than 10MB");
+      return;
+    }
+    setSelectedFile(file);
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !user) return;
+    if (!uploadForm.title.trim()) {
+      toast.error("Please enter a title");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const tags = uploadForm.tags.split(",").map((t) => t.trim()).filter(Boolean);
+      await galleryService.upload(selectedFile, user.$id, {
+        title: uploadForm.title,
+        description: uploadForm.description,
+        category: uploadForm.category,
+        tags,
+      });
+      toast.success("Image uploaded! It will be reviewed before appearing in the gallery.");
+      setIsUploadOpen(false);
+      setUploadForm({ title: "", description: "", category: "events", tags: "" });
+      setSelectedFile(null);
+      setPreview("");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
-    return <div className="flex items-center justify-center min-h-[calc(100vh-200px)]"><Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" /></div>;
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+      </div>
+    );
   }
 
   return (
@@ -50,6 +112,11 @@ export default function GalleryPage() {
             <Chip key={cat.value} variant={selectedCategory === cat.value ? "primary" : "secondary"} color={selectedCategory === cat.value ? "accent" : "default"} className="cursor-pointer" onClick={() => setSelectedCategory(cat.value)}>{cat.label}</Chip>
           ))}
         </div>
+        {user && (
+          <Button variant="primary" onPress={() => setIsUploadOpen(true)}>
+            <Upload className="w-4 h-4 mr-2" /> Upload Image
+          </Button>
+        )}
       </div>
 
       {filteredImages.length === 0 ? (
@@ -85,6 +152,35 @@ export default function GalleryPage() {
             )}
           </Modal.Body>
           <Modal.Footer><Button variant="secondary" slot="close">Close</Button></Modal.Footer>
+        </Modal.Dialog></Modal.Container>
+      </Modal.Backdrop>
+
+      <Modal.Backdrop isOpen={isUploadOpen} onOpenChange={setIsUploadOpen}>
+        <Modal.Container><Modal.Dialog className="sm:max-w-lg">
+          <Modal.CloseTrigger />
+          <Modal.Header><Modal.Heading>Upload Image</Modal.Heading></Modal.Header>
+          <Modal.Body>
+            <div className="space-y-4">
+              <TextField variant="secondary"><Label>Title *</Label><Input placeholder="Image title" value={uploadForm.title} onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })} /></TextField>
+              <TextField variant="secondary"><Label>Description</Label><Input placeholder="Brief description" value={uploadForm.description} onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })} /></TextField>
+              <div>
+                <Label>Category</Label>
+                <select value={uploadForm.category} onChange={(e) => setUploadForm({ ...uploadForm, category: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--card)] text-sm">
+                  {galleryCategories.map((cat) => <option key={cat.value} value={cat.value}>{cat.label}</option>)}
+                </select>
+              </div>
+              <TextField variant="secondary"><Label>Tags</Label><Input placeholder="comma separated tags" value={uploadForm.tags} onChange={(e) => setUploadForm({ ...uploadForm, tags: e.target.value })} /></TextField>
+              <div>
+                <Label>Image *</Label>
+                <input type="file" accept="image/*" onChange={handleFileSelect} className="mt-1 block w-full text-sm text-[var(--muted)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[var(--accent)] file:text-white hover:file:bg-[var(--accent)]/80" />
+                {preview && <img src={preview} alt="Preview" className="mt-2 w-full h-40 object-cover rounded-lg" />}
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" slot="close">Cancel</Button>
+            <Button variant="primary" onPress={handleUpload} isPending={uploading}>{uploading ? "Uploading..." : "Upload"}</Button>
+          </Modal.Footer>
         </Modal.Dialog></Modal.Container>
       </Modal.Backdrop>
     </div>

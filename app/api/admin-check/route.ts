@@ -1,46 +1,27 @@
-import { NextResponse } from "next/server";
-import { Client, Account } from "appwrite";
+import { NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/appwrite";
+import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
+import { Query } from "appwrite";
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAILS_FALLBACK || "")
-  .split(",")
-  .map((e) => e.trim())
-  .filter(Boolean);
-
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
 
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ isAdmin: false }, { status: 400 });
+    if (!email) {
+      return NextResponse.json({ isAdmin: false });
     }
 
-    const sessionCookie = request.headers.get("cookie") || "";
-    const sessionMatch = sessionCookie.match(/a_session_[^=]+=([^;]+)/);
-    if (!sessionMatch) {
-      return NextResponse.json({ isAdmin: false }, { status: 401 });
-    }
+    const { databases } = createAdminClient();
 
-    const sessionId = sessionMatch[1];
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.PROFILES, [
+      Query.equal("email", [email]),
+      Query.equal("status", ["admin"]),
+      Query.limit(1),
+    ]);
 
-    try {
-      const client = new Client()
-        .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-        .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
-
-      const account = new Account(client);
-      const session = await account.getSession({ sessionId: "current" });
-
-      if (!session || session.$id !== sessionId) {
-        return NextResponse.json({ isAdmin: false }, { status: 401 });
-      }
-    } catch {
-      return NextResponse.json({ isAdmin: false }, { status: 401 });
-    }
-
-    const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase().trim());
-
-    return NextResponse.json({ isAdmin });
-  } catch {
-    return NextResponse.json({ isAdmin: false }, { status: 500 });
+    return NextResponse.json({ isAdmin: response.documents.length > 0 });
+  } catch (error) {
+    console.error("Admin check error:", error);
+    return NextResponse.json({ isAdmin: false });
   }
 }
