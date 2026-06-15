@@ -4,7 +4,7 @@
  */
 
 import { databases } from "@/lib/appwrite";
-import { DATABASE_ID, EVENTS_COLLECTION_ID, type Event } from "@/lib/database";
+import { DATABASE_ID, EVENTS_COLLECTION_ID } from "@/lib/database";
 
 export async function GET() {
   try {
