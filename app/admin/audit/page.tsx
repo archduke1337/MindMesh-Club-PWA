@@ -33,7 +33,7 @@ export default function AdminAuditPage() {
     const loadLogs = async () => {
       try {
         const result = await queryAuditLogs({});
-        setLogs(result.documents as unknown as AuditLog[]);
+        setLogs(result.logs);
       } catch (error) { console.error("Failed to load audit logs:", error); }
       finally { setLoading(false); }
     };

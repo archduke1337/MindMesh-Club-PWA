@@ -37,14 +37,14 @@ export default function NotificationsPage() {
 
   const markAsRead = async (id: string) => {
     try {
-      await notificationService.markAsRead(id);
+      await markNotificationRead(id);
       setNotifications((prev) => prev.map((n) => n.$id === id ? { ...n, read: true } : n));
     } catch (error) { console.error("Failed to mark as read:", error); }
   };
 
   const markAllAsRead = async () => {
     try {
-      await Promise.all(notifications.filter((n) => !n.read).map((n) => notificationService.markAsRead(n.$id!)));
+      if (user) await markAllNotificationsRead(user.$id);
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     } catch (error) { console.error("Failed to mark all as read:", error); }
   };
