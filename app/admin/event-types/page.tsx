@@ -303,7 +303,7 @@ export default function AdminEventTypesPage() {
                           placeholder="e.g., workshop"
                           value={form.name}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((p) => ({ ...p, name: e.target.value }))}
-                          isDisabled={!!editingType}
+                          disabled={!!editingType}
                         />
                       </div>
                       <div className="space-y-1">
@@ -367,13 +367,11 @@ export default function AdminEventTypesPage() {
                             <div className="flex items-center gap-2">
                               <div className="flex-1 grid grid-cols-3 gap-2">
                                 <Input
-                                  size="sm"
                                   placeholder="Field name"
                                   value={field.name}
                                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleUpdateField(index, { name: e.target.value })}
                                 />
                                 <Input
-                                  size="sm"
                                   placeholder="Label"
                                   value={field.label}
                                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleUpdateField(index, { label: e.target.value })}

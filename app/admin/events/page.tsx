@@ -47,6 +47,13 @@ export default function AdminEventsPage() {
   const [tagInput, setTagInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const statusTabs = ["all", "draft", "review", "approved", "published"] as const;
+
+  const filteredEvents = events.filter((e) => {
+    if (statusFilter === "all") return true;
+    return e.status === statusFilter;
+  });
+
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
@@ -177,6 +184,36 @@ export default function AdminEventsPage() {
     close();
   };
 
+  const handleApproveEvent = async (eventId: string) => {
+    try {
+      await eventService.approveEvent(eventId, user?.$id || "");
+      await loadEvents();
+      toast.success("Event approved!");
+    } catch (error) {
+      toast.error("Failed to approve event");
+    }
+  };
+
+  const handleRejectEvent = async (eventId: string) => {
+    try {
+      await eventService.rejectEvent(eventId);
+      await loadEvents();
+      toast.success("Event rejected.");
+    } catch (error) {
+      toast.error("Failed to reject event");
+    }
+  };
+
+  const handlePublishEvent = async (eventId: string) => {
+    try {
+      await eventService.publish(eventId);
+      await loadEvents();
+      toast.success("Event published!");
+    } catch (error) {
+      toast.error("Failed to publish event");
+    }
+  };
+
   if (loading || loadingEvents) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -282,6 +319,24 @@ export default function AdminEventsPage() {
         </Card>
       </div>
 
+      {/* Status Filter Tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {statusTabs.map((tab) => {
+          const count = tab === "all" ? events.length : events.filter((e) => e.status === tab).length;
+          return (
+            <Button
+              key={tab}
+              variant={statusFilter === tab ? "primary" : "secondary"}
+              size="sm"
+              onPress={() => setStatusFilter(tab)}
+            >
+              <span className="capitalize">{tab}</span>
+              <Chip size="sm" variant="secondary" className="ml-1">{count}</Chip>
+            </Button>
+          );
+        })}
+      </div>
+
       {/* Events Table */}
       <Card className="border-none shadow-lg">
         <CardContent className="p-0">
@@ -296,7 +351,7 @@ export default function AdminEventsPage() {
                 <TableColumn>ACTIONS</TableColumn>
               </TableHeader>
               <TableBody>
-                {events.map((event) => (
+                {filteredEvents.map((event) => (
                   <TableRow key={event.$id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -345,7 +400,31 @@ export default function AdminEventsPage() {
                       </Chip>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1 md:gap-2">
+                      <div className="flex gap-1 md:gap-2 flex-wrap">
+                        {event.status === "review" && (
+                          <>
+                            <Button size="sm" variant="secondary" isIconOnly onPress={() => handleApproveEvent(event.$id!)} aria-label="Approve">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            </Button>
+                            <Button size="sm" variant="secondary" isIconOnly onPress={() => handleRejectEvent(event.$id!)} aria-label="Reject">
+                              <XCircle className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </>
+                        )}
+                        {event.status === "approved" && (
+                          <Button size="sm" variant="secondary" isIconOnly onPress={() => handlePublishEvent(event.$id!)} aria-label="Publish">
+                            <Send className="w-4 h-4 text-blue-500" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          isIconOnly
+                          onPress={() => router.push(`/admin/events/${event.$id}/registrations`)}
+                          aria-label="Registrations"
+                        >
+                          <UsersIcon className="w-4 h-4" />
+                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"

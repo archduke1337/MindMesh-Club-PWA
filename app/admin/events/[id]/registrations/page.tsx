@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { eventService } from "@/lib/events";
 import { ticketService } from "@/lib/tickets";
+import { databases } from "@/lib/appwrite";
+import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import type { Event, Registration, Ticket } from "@/lib/types";
 import { generateAndDownloadRegistrationPDF } from "@/lib/pdf";
 import { Button, Card, CardContent, Chip, Input, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
@@ -12,6 +14,10 @@ import { Loader2, ArrowLeft, Download, CheckCircle, XCircle, Users, Filter } fro
 import { toast } from "sonner";
 
 type RegistrationWithTicket = Registration & { ticket?: Ticket };
+
+async function updateRegistration(regId: string, data: Partial<Registration>): Promise<void> {
+  await databases.updateDocument(DATABASE_ID, COLLECTIONS.REGISTRATIONS, regId, data);
+}
 
 export default function EventRegistrationsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = use(params);
@@ -75,7 +81,7 @@ export default function EventRegistrationsPage({ params }: { params: Promise<{ i
   const handleApprove = async (reg: Registration) => {
     if (!reg.$id) return;
     try {
-      await eventService.update(reg.$id, { status: "approved", approvedBy: user?.$id, approvedAt: new Date().toISOString() });
+      await updateRegistration(reg.$id, { status: "approved", approvedBy: user?.$id, approvedAt: new Date().toISOString() });
       if (reg.eventId && reg.userId) {
         await ticketService.create(reg.userId, reg.eventId, reg.$id);
       }
@@ -89,7 +95,7 @@ export default function EventRegistrationsPage({ params }: { params: Promise<{ i
   const handleReject = async (reg: Registration) => {
     if (!reg.$id) return;
     try {
-      await eventService.update(reg.$id, { status: "rejected" });
+      await updateRegistration(reg.$id, { status: "rejected" });
       await loadData();
       toast.success("Registration rejected.");
     } catch (error) {
@@ -103,7 +109,7 @@ export default function EventRegistrationsPage({ params }: { params: Promise<{ i
     try {
       for (const reg of pending) {
         if (reg.$id) {
-          await eventService.update(reg.$id, { status: "approved", approvedBy: user?.$id, approvedAt: new Date().toISOString() });
+      await updateRegistration(reg.$id, { status: "approved", approvedBy: user?.$id, approvedAt: new Date().toISOString() });
           if (reg.eventId && reg.userId) {
             await ticketService.create(reg.userId, reg.eventId, reg.$id);
           }
@@ -124,7 +130,7 @@ export default function EventRegistrationsPage({ params }: { params: Promise<{ i
     try {
       for (const reg of pending) {
         if (reg.$id) {
-          await eventService.update(reg.$id, { status: "rejected" });
+      await updateRegistration(reg.$id, { status: "rejected" });
         }
       }
       await loadData();
@@ -151,7 +157,7 @@ export default function EventRegistrationsPage({ params }: { params: Promise<{ i
       case "approved": return "success";
       case "pending": return "warning";
       case "rejected": return "danger";
-      case "waitlisted": return "primary";
+      case "waitlisted": return "accent";
       case "cancelled": return "default";
       default: return "default";
     }
