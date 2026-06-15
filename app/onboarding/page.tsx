@@ -52,13 +52,18 @@ export default function OnboardingPage() {
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasApplication, setHasApplication] = useState(false);
 
   useEffect(() => { if (!authLoading && !user) router.push("/login"); }, [user, authLoading, router]);
   useEffect(() => {
-    const checkExisting = async () => { if (!user) return; const existing = await applicationService.getByUserId(user.$id); if (existing) setHasApplication(true); };
+    const checkExisting = async () => {
+      if (!user) return;
+      const existing = await applicationService.getByUserId(user.$id);
+      if (existing) {
+        router.push("/dashboard");
+      }
+    };
     if (!authLoading && user) checkExisting();
-  }, [user, authLoading]);
+  }, [user, authLoading, router]);
 
   const updateForm = (field: keyof FormData, value: unknown) => { setForm((prev) => ({ ...prev, [field]: value })); setError(null); };
   const toggleDepartment = (deptId: string) => { setForm((prev) => ({ ...prev, preferredDepartments: prev.preferredDepartments.includes(deptId) ? prev.preferredDepartments.filter((d) => d !== deptId) : [...prev.preferredDepartments, deptId] })); };
@@ -89,7 +94,6 @@ export default function OnboardingPage() {
 
   if (authLoading) return <div className="flex items-center justify-center min-h-[calc(100vh-200px)]"><Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" /></div>;
   if (!user) return null;
-  if (hasApplication) return <div className="max-w-2xl mx-auto px-4 py-12"><Card><div className="p-8 text-center space-y-4"><div className="w-16 h-16 mx-auto rounded-full bg-[var(--success)] flex items-center justify-center"><Check className="w-8 h-8 text-white" /></div><h1 className="text-2xl font-bold">Application Submitted</h1><p className="text-[var(--muted)]">Your application is under review.</p><a href="/dashboard"><Button>Go to Dashboard</Button></a></div></Card></div>;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 space-y-8">

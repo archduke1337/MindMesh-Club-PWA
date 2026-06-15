@@ -149,7 +149,7 @@ export const eventService = {
       if (event.audience === "exclusive") {
         registrationStatus = "pending";
       } else if (event.capacity && event.registered >= event.capacity) {
-        throw new Error("Event is full");
+        registrationStatus = "waitlisted";
       }
 
       const registration = await databases.createDocument(DATABASE_ID, COLLECTIONS.REGISTRATIONS, ID.unique(), {
@@ -163,6 +163,49 @@ export const eventService = {
       await this.update(eventId, { registered: event.registered + 1 });
       return registration;
     } catch (error) { console.error("Error registering:", error); throw error; }
+  },
+
+  async getWaitlistPosition(eventId: string, userId: string): Promise<number | null> {
+    try {
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.REGISTRATIONS, [
+        Query.equal("eventId", [eventId]),
+        Query.equal("status", ["waitlisted"]),
+        Query.orderAsc("registeredAt"),
+      ]);
+      const index = response.documents.findIndex((doc) => doc.userId === userId);
+      return index >= 0 ? index + 1 : null;
+    } catch (error) {
+      console.error("Error getting waitlist position:", error);
+      return null;
+    }
+  },
+
+  async promoteFromWaitlist(eventId: string): Promise<Registration | null> {
+    try {
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.REGISTRATIONS, [
+        Query.equal("eventId", [eventId]),
+        Query.equal("status", ["waitlisted"]),
+        Query.orderAsc("registeredAt"),
+        Query.limit(1),
+      ]);
+
+      if (response.documents.length === 0) return null;
+
+      const nextReg = response.documents[0] as unknown as Registration;
+      if (!nextReg.$id) return null;
+
+      await databases.updateDocument(DATABASE_ID, COLLECTIONS.REGISTRATIONS, nextReg.$id, {
+        status: "approved",
+        approvedAt: new Date().toISOString(),
+      });
+
+      await ticketService.create(nextReg.userId, eventId, nextReg.$id);
+
+      return { ...nextReg, status: "approved" };
+    } catch (error) {
+      console.error("Error promoting from waitlist:", error);
+      return null;
+    }
   },
 
   async getRegistrations(eventId: string): Promise<Registration[]> {
@@ -204,7 +247,9 @@ export const eventService = {
         Query.limit(1),
       ]);
       if (existing.documents.length > 0) {
-        const regId = existing.documents[0].$id;
+        const regDoc = existing.documents[0];
+        const regStatus = regDoc.status as string;
+        const regId = regDoc.$id;
         await databases.deleteDocument(DATABASE_ID, COLLECTIONS.REGISTRATIONS, regId);
 
         const ticket = await ticketService.getByUserAndEvent(userId, eventId);
@@ -213,7 +258,13 @@ export const eventService = {
         }
 
         const event = await this.getById(eventId);
-        if (event) await this.update(eventId, { registered: Math.max(0, event.registered - 1) });
+        if (event) {
+          await this.update(eventId, { registered: Math.max(0, event.registered - 1) });
+
+          if (regStatus !== "waitlisted") {
+            await this.promoteFromWaitlist(eventId);
+          }
+        }
       }
     } catch (error) { console.error("Error canceling registration:", error); throw error; }
   },
