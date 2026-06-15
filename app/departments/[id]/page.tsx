@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Card, Chip, Button, Loader2 } from "@heroui/react";
+import { Card, Chip, Button } from "@heroui/react";
+import { Loader2 } from "lucide-react";
 import { departmentService } from "@/lib/departments";
 import { profileService } from "@/lib/profiles";
 import type { Department, UserDepartment, Profile } from "@/lib/types";

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Card, Chip, Button, Loader2 } from "@heroui/react";
+import { Card, Chip, Button } from "@heroui/react";
+import { Loader2 } from "lucide-react";
 import { notificationService } from "@/lib/notifications";
 import type { Notification } from "@/lib/types";
 import { Bell, Check, Trash2 } from "lucide-react";
@@ -74,7 +75,7 @@ export default function NotificationsPage() {
                     {!notif.read && <div className="w-2 h-2 rounded-full bg-[var(--accent)]" />}
                   </div>
                   <p className="text-sm text-[var(--muted)]">{notif.body}</p>
-                  <p className="text-xs text-[var(--muted)] mt-1">{notif.createdAt ? new Date(notif.createdAt).toLocaleString() : ""}</p>
+                  <p className="text-xs text-[var(--muted)] mt-1">{notif.$createdAt ? new Date(notif.$createdAt).toLocaleString() : ""}</p>
                 </div>
                 {!notif.read && <Button size="sm" variant="secondary" onPress={() => notif.$id && markAsRead(notif.$id)}>Mark read</Button>}
               </div>
