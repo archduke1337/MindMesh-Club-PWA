@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Card, Chip, Button } from "@heroui/react";
 import { Loader2 } from "lucide-react";
-import { notificationService } from "@/lib/notifications";
+import { getUserNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/notifications";
 import type { Notification } from "@/lib/types";
 import { Bell, Check, Trash2 } from "lucide-react";
 
@@ -27,8 +27,8 @@ export default function NotificationsPage() {
     const loadNotifications = async () => {
       if (!user) return;
       try {
-        const notifs = await notificationService.getByUserId(user.$id);
-        setNotifications(notifs);
+        const result = await getUserNotifications(user.$id);
+        setNotifications(result as unknown as Notification[]);
       } catch (error) { console.error("Failed to load notifications:", error); }
       finally { setLoading(false); }
     };
