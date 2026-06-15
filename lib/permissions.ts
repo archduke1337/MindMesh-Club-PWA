@@ -147,7 +147,7 @@ const DESIGNATION_LEVEL_PERMISSIONS: Record<number, Permission[]> = {
 // Core Permission Resolution
 // ============================================================
 
-interface UserContext {
+export interface UserContext {
   status: MembershipStatus;
   powers: UserPower[];
   departments: UserDepartment[];

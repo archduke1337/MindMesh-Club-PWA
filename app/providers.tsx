@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider, type Attribute } from "next-themes";
+import { AuthProvider } from "@/context/AuthContext";
+import { PermissionProvider } from "@/context/PermissionContext";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -14,6 +16,10 @@ export interface ProvidersProps {
 
 export function Providers({ children, themeProps }: ProvidersProps) {
   return (
-    <NextThemesProvider {...themeProps}>{children}</NextThemesProvider>
+    <NextThemesProvider {...themeProps}>
+      <AuthProvider>
+        <PermissionProvider>{children}</PermissionProvider>
+      </AuthProvider>
+    </NextThemesProvider>
   );
 }

@@ -7,6 +7,32 @@ const { databaseId: DATABASE_ID, eventsCollectionId: EVENTS_COLLECTION_ID, regis
 
 export { DATABASE_ID, EVENTS_COLLECTION_ID, REGISTRATIONS_COLLECTION_ID, PROJECTS_COLLECTION_ID, EVENT_IMAGES_BUCKET_ID };
 
+export const COLLECTIONS = {
+  EVENTS: EVENTS_COLLECTION_ID,
+  REGISTRATIONS: REGISTRATIONS_COLLECTION_ID,
+  PROJECTS: PROJECTS_COLLECTION_ID,
+  PROFILES: "profiles",
+  APPLICATIONS: "applications",
+  MEMBERSHIPS: "memberships",
+  DEPARTMENTS: "departments",
+  USER_DEPARTMENTS: "user_departments",
+  DESIGNATIONS: "designations",
+  USER_DESIGNATIONS: "user_designations",
+  POWERS: "powers",
+  USER_POWERS: "user_powers",
+  TICKETS: "tickets",
+  TICKET_VERIFICATIONS: "ticket_verifications",
+  RESOURCES: "resources",
+  NOTIFICATIONS: "notifications",
+  AUDIT_LOGS: "audit_logs",
+  APPROVAL_WORKFLOWS: "approval_workflows",
+  GALLERY: "gallery",
+  EVENT_TYPES: "event_types",
+  EVENT_TYPE_DATA: "event_type_data",
+  BLOGS: "blogs",
+  SPONSORS: "sponsors",
+} as const;
+
 export interface Event {
   $id?: string;
   title: string;
