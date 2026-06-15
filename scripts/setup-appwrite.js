@@ -13,7 +13,7 @@ const { Client, TablesDB, Storage, ID, Permission, Role } = require("node-appwri
 const envPath = path.join(__dirname, "..", ".env.local");
 const envContent = fs.readFileSync(envPath, "utf-8");
 const get = (key) => {
-  const m = envContent.match(new RegExp(`${key}\\s*=\\s*(.+)`));
+  const m = envContent.match(new RegExp(`${key}\\s*=\\s*"?([^"\\s]+)"?`));
   return m ? m[1].trim() : null;
 };
 
