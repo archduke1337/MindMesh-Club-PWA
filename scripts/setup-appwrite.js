@@ -40,6 +40,19 @@ function run(args) {
   }
 }
 
+function runVerbose(args) {
+  try {
+    const cmd = `appwrite ${args.join(" ")}`;
+    execSync(cmd, { stdio: "pipe", timeout: 30000 });
+    return true;
+  } catch (err) {
+    const msg = err.stderr?.toString() || err.stdout?.toString() || err.message;
+    if (msg.includes("already exists")) return true;
+    console.log(`    Error: ${msg.substring(0, 200)}`);
+    return false;
+  }
+}
+
 function log(emoji, msg) {
   const colors = { ok: "\x1b[32m", fail: "\x1b[31m", skip: "\x1b[33m", step: "\x1b[36m" };
   const c = colors[emoji] || "";
