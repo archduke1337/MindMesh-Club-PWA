@@ -10,6 +10,19 @@ export const storage = new Storage(client);
 export const databases = new Databases(client);
 export { ID };
 
+export function createAdminClient() {
+  const adminClient = new Client()
+    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!)
+    .setKey(process.env.APPWRITE_API_KEY!);
+
+  return {
+    account: new Account(adminClient),
+    databases: new Databases(adminClient),
+    storage: new Storage(adminClient),
+  };
+}
+
 // Single source of truth for Appwrite config
 export const APPWRITE_CONFIG = {
   databaseId: process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,

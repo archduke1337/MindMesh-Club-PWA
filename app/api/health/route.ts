@@ -15,7 +15,7 @@ export async function GET() {
       checks: {
         environment: true,
         nodejs: process.version,
-        nextjs: "14.x",
+        nextjs: "16.x",
       },
     };
 

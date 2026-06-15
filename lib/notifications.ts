@@ -5,6 +5,7 @@
  */
 
 import { databases, ID, APPWRITE_CONFIG } from "@/lib/appwrite";
+import { Query } from "appwrite";
 import type { Notification, LetterData } from "@/lib/types";
 
 const { databaseId } = APPWRITE_CONFIG;
@@ -313,18 +314,18 @@ export async function getUserNotifications(
   userId: string,
   options?: { unreadOnly?: boolean; limit?: number; offset?: number }
 ): Promise<{ notifications: Notification[]; total: number; unreadCount: number }> {
-  const queries: string[] = [
-    `equal("userId", "${userId}")`,
-    `orderDesc("createdAt")`,
-    `limit(${options?.limit || 50})`,
+  const queries = [
+    Query.equal("userId", userId),
+    Query.orderDesc("createdAt"),
+    Query.limit(options?.limit || 50),
   ];
 
   if (options?.unreadOnly) {
-    queries.push(`equal("read", false)`);
+    queries.push(Query.equal("read", false));
   }
 
   if (options?.offset) {
-    queries.push(`offset(${options.offset})`);
+    queries.push(Query.offset(options.offset));
   }
 
   try {
@@ -334,14 +335,13 @@ export async function getUserNotifications(
       queries
     );
 
-    // Get unread count separately
     const unreadResponse = await databases.listDocuments(
       databaseId,
       NOTIFICATIONS_COLLECTION_ID,
       [
-        `equal("userId", "${userId}")`,
-        `equal("read", false)`,
-        `limit(1)`,
+        Query.equal("userId", userId),
+        Query.equal("read", false),
+        Query.limit(1),
       ]
     );
 

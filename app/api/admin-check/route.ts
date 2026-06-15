@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/appwrite";
-import { APPWRITE_CONFIG } from "@/lib/appwrite";
+import { Client, Account } from "appwrite";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAILS_FALLBACK || "")
   .split(",")
@@ -15,12 +14,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ isAdmin: false }, { status: 400 });
     }
 
-    // Verify the session by attempting to get the current user from the server
-    const { account } = createAdminClient();
+    const sessionCookie = request.headers.get("cookie") || "";
+    const sessionMatch = sessionCookie.match(/a_session_[^=]+=([^;]+)/);
+    if (!sessionMatch) {
+      return NextResponse.json({ isAdmin: false }, { status: 401 });
+    }
+
+    const sessionId = sessionMatch[1];
+
     try {
-      // Verify the session is valid by checking the JWT
-      const sessionCookie = request.headers.get("cookie") || "";
-      if (!sessionCookie.includes("a_session_")) {
+      const client = new Client()
+        .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+        .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
+
+      const account = new Account(client);
+      const session = await account.getSession({ sessionId: "current" });
+
+      if (!session || session.$id !== sessionId) {
         return NextResponse.json({ isAdmin: false }, { status: 401 });
       }
     } catch {

@@ -16,7 +16,7 @@ const getAvatarUrl = (name: string) => {
 export const Navbar = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -24,6 +24,9 @@ export const Navbar = () => {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  const showMobileMenu = isMobile === true;
+  const showDesktopMenu = isMobile === false;
 
   return (
     <nav className="sticky top-0 z-40 w-full flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-md border-b border-default-100">
@@ -33,7 +36,7 @@ export const Navbar = () => {
       </Link>
 
       {/* Desktop nav links */}
-      {!isMobile && (
+      {showDesktopMenu && (
         <div className="hidden md:flex items-center gap-1">
           {siteConfig.navItems.map((item) => (
             <Link
@@ -49,7 +52,7 @@ export const Navbar = () => {
 
       <div className="flex items-center gap-2">
         {/* Mobile menu dropdown */}
-        {isMobile && (
+        {showMobileMenu && (
           <Dropdown>
             <DropdownTrigger>
               <Button variant="ghost">Menu</Button>

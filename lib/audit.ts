@@ -5,6 +5,7 @@
  */
 
 import { databases, ID, APPWRITE_CONFIG } from "@/lib/appwrite";
+import { Query } from "appwrite";
 import type { AuditLog } from "@/lib/types";
 
 const { databaseId } = APPWRITE_CONFIG;
@@ -336,31 +337,31 @@ export async function queryAuditLogs(params: {
   limit?: number;
   offset?: number;
 }): Promise<{ logs: AuditLog[]; total: number }> {
-  const queries: string[] = [];
+  const queries = [];
 
   if (params.actorId) {
-    queries.push(`equal("actorId", "${params.actorId}")`);
+    queries.push(Query.equal("actorId", params.actorId));
   }
   if (params.entityType) {
-    queries.push(`equal("entityType", "${params.entityType}")`);
+    queries.push(Query.equal("entityType", params.entityType));
   }
   if (params.entityId) {
-    queries.push(`equal("entityId", "${params.entityId}")`);
+    queries.push(Query.equal("entityId", params.entityId));
   }
   if (params.action) {
-    queries.push(`equal("action", "${params.action}")`);
+    queries.push(Query.equal("action", params.action));
   }
   if (params.startDate) {
-    queries.push(`greaterThanEqual("timestamp", "${params.startDate}")`);
+    queries.push(Query.greaterThanEqual("timestamp", params.startDate));
   }
   if (params.endDate) {
-    queries.push(`lessThanEqual("timestamp", "${params.endDate}")`);
+    queries.push(Query.lessThanEqual("timestamp", params.endDate));
   }
 
-  queries.push(`orderDesc("timestamp")`);
-  queries.push(`limit(${params.limit || 50})`);
+  queries.push(Query.orderDesc("timestamp"));
+  queries.push(Query.limit(params.limit || 50));
   if (params.offset) {
-    queries.push(`offset(${params.offset})`);
+    queries.push(Query.offset(params.offset));
   }
 
   try {
