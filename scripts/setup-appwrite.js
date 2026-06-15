@@ -83,7 +83,7 @@ function createTable(id, name, columns, indexes = []) {
     args.push("--indexes", `'${idxJson}'`);
   }
 
-  const ok = run(args);
+  const ok = runVerbose(args);
   log(ok ? "ok" : "fail", `Table '${name}'`);
 }
 
@@ -107,7 +107,7 @@ function createBucket(id, name, maxSize, extensions) {
     extArgs,
   ];
 
-  const ok = run(args);
+  const ok = runVerbose(args);
   log(ok ? "ok" : "fail", `Bucket '${name}'`);
 }
 
