@@ -70,6 +70,20 @@ export const eventService = {
     } catch (error) { console.error("Error deleting event:", error); throw error; }
   },
 
+  async deletePastEvents(): Promise<number> {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTIONS.EVENTS, [
+        Query.lessThan("date", today),
+      ]);
+      const deletePromises = response.documents.map((doc) =>
+        databases.deleteDocument(DATABASE_ID, COLLECTIONS.EVENTS, doc.$id)
+      );
+      await Promise.all(deletePromises);
+      return response.documents.length;
+    } catch (error) { console.error("Error deleting past events:", error); throw error; }
+  },
+
   async publish(eventId: string): Promise<Event> {
     return this.update(eventId, { status: "published", publishedAt: new Date().toISOString() });
   },

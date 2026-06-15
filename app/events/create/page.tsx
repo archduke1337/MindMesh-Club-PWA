@@ -30,7 +30,7 @@ export default function CreateEventPage() {
 
   const updateForm = (field: string, value: unknown) => setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (submitStatus?: string) => {
     if (!user) return;
     if (!form.title || !form.date || !form.time || !form.venue || !form.location) {
       setError("Please fill in all required fields");
@@ -41,7 +41,8 @@ export default function CreateEventPage() {
       const slug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
       const event = await eventService.create({
         title: form.title, slug, description: form.description, image: form.image,
-        eventTypeId: form.eventTypeId, status: "draft", audience: form.audience as "public" | "member_only" | "exclusive",
+        eventTypeId: form.eventTypeId, status: (submitStatus || form.status) as "draft" | "review",
+        audience: form.audience as "public" | "member_only" | "exclusive",
         date: form.date, time: form.time, endDate: form.endDate || undefined,
         venue: form.venue, location: form.location, capacity: form.capacity,
         registered: 0, price: form.price, organizerName: form.organizerName || user.name || "Unknown",
@@ -104,8 +105,8 @@ export default function CreateEventPage() {
       <div className="flex justify-between">
         <Button variant="secondary" onPress={() => router.back()}>Cancel</Button>
         <div className="flex gap-2">
-          <Button variant="secondary" onPress={handleSubmit} isDisabled={loading}>Save as Draft</Button>
-          <Button variant="primary" onPress={async () => { updateForm("status", "review"); await handleSubmit(); }} isDisabled={loading}><Check className="w-4 h-4 mr-2" /> Submit for Review</Button>
+          <Button variant="secondary" onPress={() => handleSubmit("draft")} isDisabled={loading}>Save as Draft</Button>
+          <Button variant="primary" onPress={() => handleSubmit("review")} isDisabled={loading}><Check className="w-4 h-4 mr-2" /> Submit for Review</Button>
         </div>
       </div>
     </div>

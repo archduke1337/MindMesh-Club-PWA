@@ -94,11 +94,6 @@ export default function AdminEventsPage() {
       return;
     }
 
-    if (!formData.organizerAvatar || !formData.organizerAvatar.startsWith('http')) {
-      toast.error("Please enter a valid organizer avatar URL (must start with http:// or https://)");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -243,7 +238,7 @@ export default function AdminEventsPage() {
               <div>
                 <p className="text-sm text-default-500">Upcoming</p>
                 <p className="text-2xl font-bold">
-                  {events.filter(e => e.status === "upcoming").length}
+                  {events.filter(e => e.status === "published" || e.status === "active").length}
                 </p>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -340,7 +335,7 @@ export default function AdminEventsPage() {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        color={event.status === "upcoming" ? "success" : "default"}
+                        color={event.status === "published" || event.status === "active" ? "success" : event.status === "draft" ? "warning" : "default"}
                         variant="primary"
                         size="sm"
                         className="text-xs"
@@ -483,8 +478,8 @@ export default function AdminEventsPage() {
                     />
 
                     <select
-                      value={formData.category!}
-                      onChange={(e) => handleInputChange("category", e.target.value)}
+                      value={formData.eventTypeId!}
+                      onChange={(e) => handleInputChange("eventTypeId", e.target.value)}
                       required
                       className="w-full px-3 py-2 rounded-lg border border-default-300 bg-white dark:bg-gray-900 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                     >
