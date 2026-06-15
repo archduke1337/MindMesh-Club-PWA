@@ -126,7 +126,7 @@ run(["client", "--endpoint", ENDPOINT, "--project-id", PROJECT_ID, "--key", API_
 
 // Create database
 log("step", `Creating database: ${DB_ID}`);
-const dbOk = run(["tables-db", "create", "--database-id", DB_ID, "--name", "MindMesh Club"]);
+const dbOk = runVerbose(["tables-db", "create", "--database-id", DB_ID, "--name", "MindMesh Club"]);
 log(dbOk ? "ok" : "fail", "Database");
 
 // ============================================================
