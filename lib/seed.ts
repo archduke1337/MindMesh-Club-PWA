@@ -294,7 +294,7 @@ export async function seedEventTypes(): Promise<{ created: number; skipped: numb
   ]);
 
   const existingNames = new Set(
-    (existing.documents as Array<{ name: string }>).map((doc) => doc.name)
+    (existing.documents as unknown as Array<{ name: string }>).map((doc) => doc.name)
   );
 
   let created = 0;

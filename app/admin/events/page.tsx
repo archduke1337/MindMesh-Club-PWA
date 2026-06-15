@@ -7,7 +7,7 @@ import { eventService } from "@/lib/events";
 import type { Event } from "@/lib/types";
 import { getErrorMessage } from "@/lib/errorHandler";
 import { toast } from "sonner";
-import { PlusIcon, Pencil, Trash2, Image as ImageIcon, CalendarIcon, MapPinIcon, UsersIcon, DollarSignIcon, TagIcon, StarIcon, CrownIcon, TrendingUpIcon, LinkIcon } from "lucide-react";
+import { PlusIcon, Pencil, Trash2, Image as ImageIcon, CalendarIcon, MapPinIcon, UsersIcon, DollarSignIcon, TagIcon, StarIcon, CrownIcon, TrendingUpIcon, LinkIcon, CheckCircle, XCircle, Send } from "lucide-react";
 import { Button, Card, CardContent, Chip, Input, Modal, ModalBackdrop, ModalContainer, ModalDialog, ModalBody, ModalFooter, ModalHeader, Switch, Tab, TabListContainer, TabList, TabIndicator, TabPanel, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow, Tabs, TextArea, useOverlayState } from "@heroui/react";
 
 export default function AdminEventsPage() {
@@ -19,6 +19,7 @@ export default function AdminEventsPage() {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Form state
   const [formData, setFormData] = useState<Partial<Event>>({
