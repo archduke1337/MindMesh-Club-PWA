@@ -54,8 +54,6 @@ export interface Project {
   $updatedAt?: string;
 }
 
-export { eventService } from './events';
-
 export const projectService = {
   async getAllProjects(queries: string[] = []) {
     try {
