@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/context/PermissionContext";
 import { Card, Chip, Input, Label, TextField } from "@heroui/react";
 import { Loader2 } from "lucide-react";
-import { auditService } from "@/lib/audit";
+import { queryAuditLogs } from "@/lib/audit";
 import type { AuditLog } from "@/lib/types";
 import { Search, Activity } from "lucide-react";
 
@@ -32,8 +32,8 @@ export default function AdminAuditPage() {
   useEffect(() => {
     const loadLogs = async () => {
       try {
-        const allLogs = await auditService.getAll();
-        setLogs(allLogs);
+        const result = await queryAuditLogs({});
+        setLogs(result.documents as unknown as AuditLog[]);
       } catch (error) { console.error("Failed to load audit logs:", error); }
       finally { setLoading(false); }
     };
