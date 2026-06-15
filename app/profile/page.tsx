@@ -97,7 +97,6 @@ export default function ProfilePage() {
         } catch {
           // No old picture to delete
         }
-        }
       }
 
       // Upload new profile picture
@@ -108,12 +107,18 @@ export default function ProfilePage() {
       );
 
       await account.updatePrefs({
-        prefs: {
-          ...user?.prefs,
-          profilePictureId: response.$id,
-        },
+        ...user?.prefs,
+        profilePictureId: response.$id,
       });
 
+      const fileUrl = storage.getFilePreview(
+        PROFILE_BUCKET_ID,
+        response.$id,
+        400,
+        400,
+        ImageGravity.Center,
+        100
+      );
       const urlString = fileUrl.toString();
       setProfilePicture(urlString);
       

@@ -54,7 +54,7 @@ export default function DiagnosticsPage() {
         },
         services: [],
         buildInfo: {
-          nextVersion: "14.x",
+          nextVersion: "16.x",
           typescript: true,
         },
       };

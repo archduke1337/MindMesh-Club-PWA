@@ -164,7 +164,7 @@ export default function BlogPage() {
                 : "Check back later for new content"}
             </p>
             {user && (
-              <Button onPress={() => router.push("/blog/write")}>
+              <Button onPress={() => router.push("/help-feedback")}>
                 <PenIcon className="w-5 h-5" />
                 Write a Blog
               </Button>

@@ -494,7 +494,7 @@ export default function AdminEventsPage() {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
                       <Switch
                         isSelected={formData.isFeatured}
-                        onChange={(checked: any) => handleInputChange("isFeatured", checked)}
+                        onChange={(checked: boolean) => handleInputChange("isFeatured", checked)}
                       >
                         <div className="flex items-center gap-2">
                           <StarIcon className="w-4 h-4 text-yellow-600" />
@@ -503,7 +503,7 @@ export default function AdminEventsPage() {
                       </Switch>
                       <Switch
                         isSelected={formData.isPremium}
-                        onChange={(checked: any) => handleInputChange("isPremium", checked)}
+                        onChange={(checked: boolean) => handleInputChange("isPremium", checked)}
                       >
                         <div className="flex items-center gap-2">
                           <CrownIcon className="w-4 h-4 text-purple-600" />

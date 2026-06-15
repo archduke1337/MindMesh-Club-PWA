@@ -266,6 +266,6 @@ export function generateAndDownloadRegistrationPDF(params: {
     generatedAt: new Date().toISOString(),
   });
 
-  const filename = `event-registrations-${params.event.slug}-${new Date().toISOString().split("T")[0]}.pdf`;
+  const filename = `event-registrations-${params.event.title.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`;
   downloadPDF(html, filename);
 }

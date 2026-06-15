@@ -95,7 +95,7 @@ export default function ContactPage() {
     }
   };
 
-  const handleSubmit = handleSubmitWithEmailJS; // Change to handleSubmitWithAppwrite if using Appwrite
+  const handleSubmit = handleSubmitWithEmailJS;
 
   const contactMethods = [
     {
