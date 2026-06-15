@@ -69,6 +69,16 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     });
 
+    try {
+      const profile = await databases.getDocument(DATABASE_ID, COLLECTIONS.PROFILES, userId);
+      if (profile && profile.email) {
+        const template = departmentAssignedTemplate(profile.name || "Member", departmentName || departmentId);
+        await sendEmail({ to: profile.email, ...template });
+      }
+    } catch {
+      // Profile may not exist; email is best-effort
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Department assign error:", error);

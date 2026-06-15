@@ -130,6 +130,16 @@ export async function DELETE(request: NextRequest) {
       createdAt: new Date().toISOString(),
     });
 
+    try {
+      const profile = await databases.getDocument(DATABASE_ID, COLLECTIONS.PROFILES, userId);
+      if (profile && profile.email) {
+        const template = revocationEmailTemplate(profile.name, "designation");
+        await sendEmail({ to: profile.email, ...template });
+      }
+    } catch {
+      // Profile may not exist; email is best-effort
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Designation revoke error:", error);

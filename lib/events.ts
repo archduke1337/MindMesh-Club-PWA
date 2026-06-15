@@ -3,6 +3,7 @@ import { databases, storage } from "./appwrite";
 import { DATABASE_ID, COLLECTIONS, EVENT_IMAGES_BUCKET_ID } from "./database";
 import type { Event, Registration } from "./types";
 import { ticketService } from "./tickets";
+import { sendRegistrationEmail } from "./emailService";
 
 export const eventService = {
   async getAll(queries: string[] = []): Promise<Event[]> {

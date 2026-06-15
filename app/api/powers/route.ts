@@ -106,6 +106,17 @@ export async function DELETE(request: NextRequest) {
       createdAt: new Date().toISOString(),
     });
 
+    try {
+      const { databases: adminDb } = createAdminClient();
+      const profile = await adminDb.getDocument(DATABASE_ID, COLLECTIONS.PROFILES, userId);
+      if (profile && profile.email) {
+        const template = revocationEmailTemplate(profile.name, "power");
+        await sendEmail({ to: profile.email, ...template });
+      }
+    } catch {
+      // Profile may not exist; email is best-effort
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Power revoke error:", error);

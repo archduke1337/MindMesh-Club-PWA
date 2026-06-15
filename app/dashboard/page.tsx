@@ -14,7 +14,7 @@ import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import { eventService } from "@/lib/events";
 import { Query } from "appwrite";
 import type { Event, Registration, Notification, MembershipStatus, Department, UserDepartment } from "@/lib/types";
-import { Calendar, Users, FileText, Settings, BookOpen, FolderOpen, Shield, BarChart3, ClipboardCheck, Bell, TrendingUp, UserCheck, UserX, Activity } from "lucide-react";
+import { Calendar, Users, FileText, Settings, BookOpen, FolderOpen, Shield, BarChart3, ClipboardCheck, Bell, UserCheck, Activity } from "lucide-react";
 
 interface DashboardStats {
   eventsAttended: number;
@@ -348,19 +348,132 @@ export default function DashboardPage() {
       )}
 
       <PermissionGate roleOrAbove="lead">
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Leadership</h2>
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">Leadership Dashboard</h2>
+
+          {leadDepartments.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-medium text-[var(--muted)]">Department Overview</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {leadDepartments.map((dept) => (
+                  <Card key={dept.$id}>
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <FolderOpen className="w-5 h-5 text-[var(--accent)]" />
+                        <h4 className="font-semibold">{dept.departmentName}</h4>
+                      </div>
+                      <div className="flex gap-4 text-sm">
+                        <span><span className="font-semibold">{dept.memberCount}</span> <span className="text-[var(--muted)]">members</span></span>
+                        <span><span className="font-semibold">{dept.eventCount}</span> <span className="text-[var(--muted)]">events</span></span>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {draftReviewEvents.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-medium text-[var(--muted)]">Event Pipeline</h3>
+              <div className="space-y-3">
+                {draftReviewEvents.slice(0, 5).map((event) => (
+                  <Card key={event.$id}>
+                    <div className="p-4 flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">{event.title}</h4>
+                        <p className="text-sm text-[var(--muted)]">
+                          {new Date(event.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })} &middot; {event.time}
+                        </p>
+                      </div>
+                      <Chip size="sm" variant="soft" color={event.status === "review" ? "warning" : "default"}>
+                        {event.status}
+                      </Chip>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <h3 className="text-lg font-medium text-[var(--muted)]">Quick Actions</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <a href="/events/create">
+                <Card className="cursor-pointer hover:border-[var(--accent)] transition-colors">
+                  <div className="p-4 flex items-center gap-3"><Calendar className="w-6 h-6 text-[var(--accent)]" /><div><h4 className="font-semibold text-sm">Create Event</h4><p className="text-xs text-[var(--muted)]">Draft a new event</p></div></div>
+                </Card>
+              </a>
+              <a href="/admin/departments">
+                <Card className="cursor-pointer hover:border-[var(--accent)] transition-colors">
+                  <div className="p-4 flex items-center gap-3"><Users className="w-6 h-6 text-[var(--success)]" /><div><h4 className="font-semibold text-sm">Manage Team</h4><p className="text-xs text-[var(--muted)]">View department members</p></div></div>
+                </Card>
+              </a>
+              <a href="/resources">
+                <Card className="cursor-pointer hover:border-[var(--accent)] transition-colors">
+                  <div className="p-4 flex items-center gap-3"><BookOpen className="w-6 h-6 text-[var(--warning)]" /><div><h4 className="font-semibold text-sm">View Resources</h4><p className="text-xs text-[var(--muted)]">Manage resources</p></div></div>
+                </Card>
+              </a>
+            </div>
+          </div>
+        </div>
+      </PermissionGate>
+
+      <PermissionGate role="head">
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">Head Dashboard</h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatsCard title="Departments" value={headStats.totalDepartments} icon={<FolderOpen className="w-5 h-5" />} color="accent" />
+            <StatsCard title="Total Members" value={headStats.totalMembers} icon={<Users className="w-5 h-5" />} color="success" />
+            <StatsCard title="Pending Approvals" value={headStats.pendingApprovals} icon={<ClipboardCheck className="w-5 h-5" />} color="warning" />
+            <StatsCard title="Total Events" value={headStats.totalEvents} icon={<Calendar className="w-5 h-5" />} color="danger" />
+          </div>
+
+          {pendingApprovalEvents.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-medium text-[var(--muted)]">Event Approvals</h3>
+              <div className="space-y-3">
+                {pendingApprovalEvents.slice(0, 5).map((event) => (
+                  <Card key={event.$id}>
+                    <div className="p-4 flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">{event.title}</h4>
+                        <p className="text-sm text-[var(--muted)]">By {event.organizerName} &middot; {new Date(event.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</p>
+                      </div>
+                      <Chip size="sm" variant="soft" color="warning">Review</Chip>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <a href="/events/create">
-              <Card className="cursor-pointer hover:border-[var(--accent)] transition-colors">
-                <div className="p-4 flex items-center gap-3"><Calendar className="w-8 h-8 text-[var(--accent)]" /><div><h3 className="font-semibold">Create Event</h3><p className="text-sm text-[var(--muted)]">Draft a new event for approval</p></div></div>
-              </Card>
-            </a>
-            <a href="/resources">
-              <Card className="cursor-pointer hover:border-[var(--accent)] transition-colors">
-                <div className="p-4 flex items-center gap-3"><BookOpen className="w-8 h-8 text-[var(--success)]" /><div><h3 className="font-semibold">Manage Resources</h3><p className="text-sm text-[var(--muted)]">Upload and organize resources</p></div></div>
-              </Card>
-            </a>
+            <Card>
+              <div className="p-4 space-y-3">
+                <h3 className="font-semibold flex items-center gap-2"><UserCheck className="w-5 h-5 text-[var(--warning)]" /> Membership Queue</h3>
+                <div className="text-center py-4">
+                  <p className="text-3xl font-bold text-[var(--warning)]">{pendingApplications}</p>
+                  <p className="text-sm text-[var(--muted)]">pending applications</p>
+                </div>
+                <a href="/admin/membership" className="block text-center text-sm text-[var(--accent)] hover:underline">View Queue →</a>
+              </div>
+            </Card>
+            <Card>
+              <div className="p-4 space-y-3">
+                <h3 className="font-semibold flex items-center gap-2"><Activity className="w-5 h-5 text-[var(--accent)]" /> Department Health</h3>
+                <div className="space-y-2">
+                  {departmentHealth.slice(0, 4).map((dh) => (
+                    <div key={dh.name} className="flex items-center justify-between text-sm">
+                      <span className="truncate">{dh.name}</span>
+                      <span className="text-[var(--muted)]">{dh.memberCount} members</span>
+                    </div>
+                  ))}
+                </div>
+                <a href="/admin/departments" className="block text-center text-sm text-[var(--accent)] hover:underline">View All →</a>
+              </div>
+            </Card>
           </div>
         </div>
       </PermissionGate>
