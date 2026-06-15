@@ -127,9 +127,9 @@ export default function OnboardingPage() {
         {step === 5 && <div className="space-y-6">
           <div className="p-4 rounded-lg bg-[var(--surface)] space-y-3"><h3 className="font-semibold">Club Oath</h3><p className="text-sm text-[var(--muted)]">I solemnly pledge to uphold the values and mission of Mind Mesh Club. I will contribute actively, maintain integrity, support fellow members, and represent the club with honor.</p></div>
           <div className="space-y-3">
-            <Checkbox isSelected={form.oathAccepted} onChange={(e) => updateForm("oathAccepted", e.target.checked)}>I accept the Club Oath</Checkbox>
-            <Checkbox isSelected={form.termsAccepted} onChange={(e) => updateForm("termsAccepted", e.target.checked)}>I accept the Terms of Service</Checkbox>
-            <Checkbox isSelected={form.constitutionAccepted} onChange={(e) => updateForm("constitutionAccepted", e.target.checked)}>I acknowledge the Club Constitution</Checkbox>
+            <Checkbox isSelected={form.oathAccepted} onChange={() => updateForm("oathAccepted", !form.oathAccepted)}>I accept the Club Oath</Checkbox>
+            <Checkbox isSelected={form.termsAccepted} onChange={() => updateForm("termsAccepted", !form.termsAccepted)}>I accept the Terms of Service</Checkbox>
+            <Checkbox isSelected={form.constitutionAccepted} onChange={() => updateForm("constitutionAccepted", !form.constitutionAccepted)}>I acknowledge the Club Constitution</Checkbox>
           </div>
         </div>}
       </div></Card>

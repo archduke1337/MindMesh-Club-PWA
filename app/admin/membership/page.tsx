@@ -118,7 +118,7 @@ export default function AdminMembershipPage() {
                     <span>•</span>
                     <span>Submitted: {new Date(app.submittedAt).toLocaleDateString()}</span>
                   </div>
-                  {app.preferredDepartments?.length > 0 && (
+                  {app.preferredDepartments && app.preferredDepartments.length > 0 && (
                     <div className="flex gap-1">{app.preferredDepartments.map((dept) => <Chip key={dept} color="default">{dept}</Chip>)}</div>
                   )}
                 </div>
