@@ -179,7 +179,7 @@ export function generateRegistrationPDF(params: {
         </div>
         <div class="stat">
           <div class="stat-value">${
-            registrations.filter((r) => r.ticket?.status === "checked_in" || r.status === "checked_in").length
+            registrations.filter((r) => r.ticket?.status === "checked_in").length
           }</div>
           <div class="stat-label">Checked In</div>
         </div>

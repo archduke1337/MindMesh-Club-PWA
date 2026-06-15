@@ -1,27 +1,32 @@
-// app/blog/[slug]/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { blogService, Blog } from "@/lib/blog";
-import { toast } from "sonner";
-import { Avatar, AvatarImage, AvatarFallback, Button, Card, CardContent, Chip } from "@heroui/react";
+import { blogService, type Blog } from "@/lib/blog";
+import { Button, Card, CardContent, Chip } from "@heroui/react";
 import {
   ArrowLeftIcon,
   ClockIcon,
   EyeIcon,
   CalendarIcon,
-  ShareIcon,
+  TagIcon,
 } from "lucide-react";
 
-export default function BlogPostPage() {
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+export default function BlogDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const slug = params.slug as string;
-
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
-  const [relatedBlogs, setRelatedBlogs] = useState<Blog[]>([]);
+
+  const slug = params.slug as string;
 
   useEffect(() => {
     if (slug) {
@@ -31,60 +36,24 @@ export default function BlogPostPage() {
 
   const loadBlog = async () => {
     try {
-      const blogData = await blogService.getBlogBySlug(slug);
-      setBlog(blogData);
-
-      // Increment views
-      if (blogData) {
-        blogService.incrementViews(blogData.$id!, blogData.views);
-      }
-
-      // Load related blogs
-      if (blogData) {
-        const related = await blogService.getBlogsByCategory(
-          blogData.category,
-          4
-        );
-        setRelatedBlogs(
-          related.filter((b) => b.$id !== blogData.$id).slice(0, 3)
-        );
+      const data = await blogService.getBlogBySlug(slug);
+      if (data) {
+        setBlog(data);
+        await blogService.incrementViews(data.$id!, data.views);
       }
     } catch (error) {
       console.error("Error loading blog:", error);
-      toast.error("Blog not found");
-      router.push("/blog");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: blog?.title,
-        text: blog?.excerpt,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard!");
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-          <p className="mt-4">Loading blog...</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <div className="inline-block w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-default-500">Loading blog...</p>
         </div>
       </div>
     );
@@ -92,145 +61,110 @@ export default function BlogPostPage() {
 
   if (!blog) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-xl font-semibold mb-4">Blog not found</p>
-          <Button onPress={() => router.push("/blog")}>
-            Back to Blogs
-          </Button>
-        </div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-md">
+          <CardContent className="text-center py-12 space-y-4">
+            <p className="text-4xl">📝</p>
+            <h2 className="text-xl font-bold">Blog Not Found</h2>
+            <p className="text-default-500">This blog post may have been removed or doesn&apos;t exist.</p>
+            <Button variant="primary" onPress={() => router.push("/blog")}>
+              Browse Blogs
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-20">
-      {/* Back Button */}
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
-        <Button
-          variant="ghost"
-        >
-          Back to Blogs
-        </Button>
-      </div>
+    <div className="max-w-4xl mx-auto py-8 px-4 space-y-8">
+      <Button
+        variant="ghost"
+        size="sm"
+        onPress={() => router.back()}
+        className="mb-4"
+      >
+        <ArrowLeftIcon className="w-4 h-4 mr-2" />
+        Back to Blogs
+      </Button>
 
-      {/* Hero Section */}
-      <div className="relative h-[400px] mb-12">
+      <div className="relative rounded-2xl overflow-hidden">
         <img
           src={blog.coverImage}
           alt={blog.title}
-          className="w-full h-full object-cover"
+          className="w-full h-64 md:h-96 object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-        {/* Title Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-8">
-          <div className="container mx-auto max-w-4xl">
-            <Chip variant="primary" className="mb-4">
-              {blog.category}
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+          <div className="flex flex-wrap gap-2 mb-3">
+            <Chip className="bg-purple-600 text-white font-bold">
+              {blog.category.replace("-", " ")}
             </Chip>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              {blog.title}
-            </h1>
-            <p className="text-xl text-white/90">{blog.excerpt}</p>
+            {blog.featured && (
+              <Chip className="bg-yellow-500 text-white font-bold">
+                Featured
+              </Chip>
+            )}
           </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-white">{blog.title}</h1>
         </div>
       </div>
 
-      {/* Content Container */}
-      <div className="container mx-auto px-4 max-w-4xl">
-        {/* Meta Info */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              {/* Author */}
-              <div className="flex items-center gap-3">
-                <Avatar className="w-12 h-12"><AvatarImage src={blog.authorAvatar} alt={blog.authorName} /><AvatarFallback>{blog.authorName?.charAt(0) || 'A'}</AvatarFallback></Avatar>
-                <div>
-                  <p className="font-semibold">{blog.authorName}</p>
-                  <p className="text-sm text-default-500">
-                    {blog.publishedAt && formatDate(blog.publishedAt)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="flex items-center gap-6 text-sm text-default-600">
-                <div className="flex items-center gap-2">
-                  <ClockIcon className="w-4 h-4" />
-                  <span>{blog.readTime} min read</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <EyeIcon className="w-4 h-4" />
-                  <span>{blog.views} views</span>
-                </div>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  isIconOnly
-                >
-                  <ShareIcon className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Blog Content */}
-        <Card className="mb-8">
-          <CardContent className="p-8 md:p-12">
-            <div className="prose prose-lg dark:prose-invert max-w-none">
-              {/* Simple content rendering - for Markdown, use a library like react-markdown */}
-              <div className="whitespace-pre-wrap">{blog.content}</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tags */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h3 className="font-semibold mb-4">Tags</h3>
-            <div className="flex flex-wrap gap-2">
-              {blog.tags.map((tag, index) => (
-                <Chip key={index} variant="primary">
-                  #{tag}
-                </Chip>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Related Blogs */}
-        {relatedBlogs.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {relatedBlogs.map((relatedBlog) => (
-                <Card
-                  key={relatedBlog.$id}
-                  className="hover:shadow-xl transition-all"
-                >
-                  <CardContent className="p-0">
-                    <img
-                      src={relatedBlog.coverImage}
-                      alt={relatedBlog.title}
-                      className="w-full h-32 object-cover"
-                    />
-                    <div className="p-4">
-                      <h3 className="font-bold line-clamp-2 mb-2">
-                        {relatedBlog.title}
-                      </h3>
-                      <p className="text-sm text-default-600 line-clamp-2">
-                        {relatedBlog.excerpt}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+      <div className="flex flex-wrap items-center gap-4 text-sm text-default-500">
+        <div className="flex items-center gap-2">
+          <img
+            src={blog.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(blog.authorName)}&background=random`}
+            alt={blog.authorName}
+            className="w-8 h-8 rounded-full"
+          />
+          <span className="font-medium text-foreground">{blog.authorName}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <CalendarIcon className="w-4 h-4" />
+          <span>{blog.publishedAt ? formatDate(blog.publishedAt) : "Draft"}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <ClockIcon className="w-4 h-4" />
+          <span>{blog.readTime} min read</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <EyeIcon className="w-4 h-4" />
+          <span>{blog.views} views</span>
+        </div>
       </div>
+
+      <div className="flex flex-wrap gap-2">
+        {blog.tags.map((tag, index) => (
+          <Chip key={index} size="sm" variant="primary">
+            <TagIcon className="w-3 h-3 mr-1" />
+            {tag}
+          </Chip>
+        ))}
+      </div>
+
+      <Card>
+        <CardContent className="p-6 md:p-8">
+          <div className="prose prose-lg max-w-none dark:prose-invert">
+            <div
+              className="whitespace-pre-wrap leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: blog.content }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6 text-center space-y-4">
+          <p className="text-lg font-semibold">Enjoyed this article?</p>
+          <p className="text-default-500">Share it with your network</p>
+          <div className="flex gap-3 justify-center">
+            <Button variant="primary" onPress={() => router.push("/blog")}>
+              Read More Blogs
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
