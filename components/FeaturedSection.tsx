@@ -2,7 +2,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar, MapPin, Users, Star, Crown, ArrowRight, Sparkles } from 'lucide-react';
-import { eventService, Event } from '@/lib/database';
+import { eventService } from '@/lib/events';
+import type { Event } from '@/lib/types';
 import { Query } from 'appwrite';
 
 const formatDate = (dateString: string) => {
@@ -26,9 +27,9 @@ export default function FeaturedSection() {
      const fetchFeaturedEvents = async () => {
           try {
                setLoading(true);
-               const events = await eventService.getAllEvents([
+               const events = await eventService.getAll([
                     Query.equal('isFeatured', true),
-                    Query.equal('status', 'upcoming'),
+                    Query.equal('status', 'published'),
                     Query.orderAsc('date'),
                     Query.limit(6)
                ]);
