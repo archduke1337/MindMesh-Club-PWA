@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/appwrite";
 import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import { ID, Query } from "appwrite";
+import { sendEmail, departmentAssignedTemplate } from "@/lib/emailService";
 
 function hasSession(request: NextRequest): boolean {
   return Array.from(request.cookies).some(
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       userId,
       departmentId,
       assignedAt: new Date().toISOString(),
-      status: "active",
+      isActive: true,
     });
 
     await databases.updateDocument(DATABASE_ID, COLLECTIONS.PROFILES, userId, {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/appwrite";
 import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import { ID, Query } from "appwrite";
-import { sendEmail, welcomeEmailTemplate } from "@/lib/emailService";
+import { sendEmail, welcomeEmailTemplate, rejectionEmailTemplate } from "@/lib/emailService";
 
 function hasSession(request: NextRequest): boolean {
   return Array.from(request.cookies).some(
@@ -69,11 +69,7 @@ export async function POST(request: NextRequest) {
 
       await databases.createDocument(DATABASE_ID, COLLECTIONS.PROFILES, application.userId, {
         userId: application.userId,
-        name: application.name,
-        email: application.email,
         phone: application.phone,
-        department: application.department || "unassigned",
-        status: "member",
       });
 
       await databases.createDocument(DATABASE_ID, COLLECTIONS.NOTIFICATIONS, ID.unique(), {
@@ -110,6 +106,11 @@ export async function POST(request: NextRequest) {
         read: false,
         createdAt: new Date().toISOString(),
       });
+
+      try {
+        const template = rejectionEmailTemplate(application.name, reason || "Application rejected");
+        await sendEmail({ to: application.email, ...template });
+      } catch (e) { console.error("Rejection email failed:", e); }
 
       return NextResponse.json({ success: true });
     }

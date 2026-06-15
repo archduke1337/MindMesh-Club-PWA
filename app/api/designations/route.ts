@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/appwrite";
 import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import { ID, Query } from "appwrite";
-import { sendEmail, designationEmailTemplate } from "@/lib/emailService";
+import { sendEmail, designationEmailTemplate, revocationEmailTemplate } from "@/lib/emailService";
 
 function hasSession(request: NextRequest): boolean {
   return Array.from(request.cookies).some(
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       userId,
       designationId,
       assignedAt: new Date().toISOString(),
-      status: "active",
+      isActive: true,
     });
 
     await databases.createDocument(DATABASE_ID, COLLECTIONS.NOTIFICATIONS, ID.unique(), {

@@ -12,8 +12,9 @@ import ActivityFeed from "@/components/ActivityFeed";
 import { databases } from "@/lib/appwrite";
 import { DATABASE_ID, COLLECTIONS } from "@/lib/database";
 import { eventService } from "@/lib/events";
-import type { Event, Registration, Notification, MembershipStatus } from "@/lib/types";
-import { Calendar, Users, FileText, Settings, BookOpen, FolderOpen, Shield, BarChart3, ClipboardCheck, Bell } from "lucide-react";
+import { Query } from "appwrite";
+import type { Event, Registration, Notification, MembershipStatus, Department, UserDepartment } from "@/lib/types";
+import { Calendar, Users, FileText, Settings, BookOpen, FolderOpen, Shield, BarChart3, ClipboardCheck, Bell, TrendingUp, UserCheck, UserX, Activity } from "lucide-react";
 
 interface DashboardStats {
   eventsAttended: number;
@@ -39,6 +40,13 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [myEventsTab, setMyEventsTab] = useState("upcoming");
   const [loading, setLoading] = useState(true);
+
+  const [leadDepartments, setLeadDepartments] = useState<(UserDepartment & { departmentName: string; memberCount: number; eventCount: number })[]>([]);
+  const [draftReviewEvents, setDraftReviewEvents] = useState<Event[]>([]);
+  const [headStats, setHeadStats] = useState({ totalDepartments: 0, totalMembers: 0, pendingApprovals: 0, totalEvents: 0 });
+  const [pendingApprovalEvents, setPendingApprovalEvents] = useState<Event[]>([]);
+  const [departmentHealth, setDepartmentHealth] = useState<{ name: string; memberCount: number; eventCount: number }[]>([]);
+  const [pendingApplications, setPendingApplications] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login");
@@ -116,6 +124,65 @@ export default function DashboardPage() {
         });
 
         setNotifications(notificationsResult.documents as unknown as Notification[]);
+
+        if (isRoleOrAbove("lead")) {
+          const userDepts = departmentsResult.documents as unknown as UserDepartment[];
+          const deptDetails = await Promise.all(
+            userDepts.map(async (ud) => {
+              const [deptDoc, membersResult, eventsResult] = await Promise.all([
+                databases.getDocument(DATABASE_ID, COLLECTIONS.DEPARTMENTS, ud.departmentId).catch(() => null),
+                databases.listDocuments(DATABASE_ID, COLLECTIONS.USER_DEPARTMENTS, [
+                  Query.equal("departmentId", [ud.departmentId]),
+                  Query.equal("isActive", [true]),
+                ]),
+                databases.listDocuments(DATABASE_ID, COLLECTIONS.EVENTS, [
+                  Query.equal("ownerId", [userId]),
+                ]),
+              ]);
+              return {
+                ...ud,
+                departmentName: (deptDoc as unknown as Department)?.name || "Unknown",
+                memberCount: membersResult.total,
+                eventCount: eventsResult.total,
+              };
+            })
+          );
+          setLeadDepartments(deptDetails);
+
+          const allEvents = await eventService.getAll();
+          const drEvents = allEvents.filter((e) => e.status === "draft" || e.status === "review");
+          setDraftReviewEvents(drEvents);
+        }
+
+        if (isRoleOrAbove("head")) {
+          const [allDepts, allUserDepts, allEvents, pendingApps] = await Promise.all([
+            databases.listDocuments(DATABASE_ID, COLLECTIONS.DEPARTMENTS, [Query.equal("isActive", [true])]),
+            databases.listDocuments(DATABASE_ID, COLLECTIONS.USER_DEPARTMENTS, [Query.equal("isActive", [true])]),
+            eventService.getAll(),
+            databases.listDocuments(DATABASE_ID, COLLECTIONS.APPLICATIONS, [Query.equal("status", ["pending"])]),
+          ]);
+
+          const depts = allDepts.documents as unknown as Department[];
+          const userDepts = allUserDepts.documents as unknown as UserDepartment[];
+
+          const deptHealth = await Promise.all(
+            depts.map(async (dept) => {
+              const members = userDepts.filter((ud) => ud.departmentId === dept.$id);
+              const deptEvents = allEvents.filter((e) => e.ownerId === userId);
+              return { name: dept.name, memberCount: members.length, eventCount: deptEvents.length };
+            })
+          );
+
+          setHeadStats({
+            totalDepartments: allDepts.total,
+            totalMembers: allUserDepts.total,
+            pendingApprovals: allEvents.filter((e) => e.status === "review").length,
+            totalEvents: allEvents.length,
+          });
+          setPendingApprovalEvents(allEvents.filter((e) => e.status === "review"));
+          setDepartmentHealth(deptHealth);
+          setPendingApplications(pendingApps.total);
+        }
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
       } finally {
