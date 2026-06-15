@@ -133,7 +133,7 @@ export default function FeaturedSection() {
                                              {/* Category */}
                                              <div className="absolute top-4 right-4">
                                                   <span className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-semibold border border-white/30">
-                                                       {event.category}
+                                                       {event.eventTypeId}
                                                   </span>
                                              </div>
 
